@@ -1,9 +1,9 @@
-/File: MapCompare.js
+//File: MapCompare.js
 //
-//Morphing maps within a group with shared name prefix.
+// Comparing series of 2D/3D maps by animating a map between them.
 //
-//Usage: Create multiple maps with similar settings and shared name prefix.
-//Then, activate one map in the main window and run this script.
+// Usage: Create multiple maps with similar settings and shared name prefix.
+// Then, activate one map in the main window and run this script.
 //
 function Animation(mp, bodyList) {
     var moved = mp.MoveBodiesTo(bodyList, 30, 75, 0);
