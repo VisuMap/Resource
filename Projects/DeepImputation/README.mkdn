@@ -1,0 +1,9 @@
+# Data Imputation with Deep Neural Networks
+
+This project contains code and sample datasets for data imputation in high dimensional data space.
+
+System requirements to run programs in this project:
+  * Windows 7 or 10
+  * python 3.6
+  * tensorflow version 1.12
+  * VisuMap 5.0 with DataModeling plugin

@@ -1,0 +1,15 @@
+# Augmented Learning
+
+This project contains code and sample datasets for augmented learning.
+Augmented learning is a training technique that augments data with trainable
+parameters which manifest themself in the target neural networks as trainable
+variables, like weights, bias, but are logically part of with training data.
+Depending on the design of those network, those trainable parameters, called 
+augmentation, may discern different perspectives of the dataset.
+
+
+System requirements to run programs in this project:
+  * Windows 7 or 10
+  * python 3.6
+  * tensorflow version 1.12
+  * VisuMap 5.0 with DataModeling plugin

@@ -1,0 +1,9 @@
+*.meta
+*.md
+*.index
+*.chk
+*.aug
+*.data-00000-of-00001
+__pycache__
+*.mis
+tf_log/
