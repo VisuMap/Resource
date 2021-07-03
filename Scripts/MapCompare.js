@@ -6,13 +6,42 @@
 // Then, activate one map in the main window and run this script.
 //
 function Animation(mp, bodyList) {
+    HighlightBodies(mp, bodyList);
     var moved = mp.MoveBodiesTo(bodyList, 30, 75, 0);
     vv.Sleep(1000);
     return moved;
 }
 
-var msg = "Moved bodies: ";
+function HighlightBodies(map, bodyList) {
+   return;
+   var selected = New.StringArray();
+   var threshold = 0.5*(map.Width + map.Height)*0.05;
+   threshold *= threshold;
+   for(var i=0; i<map.BodyList.Count; i++) {
+       var b1 = map.BodyList[i];
+       var b2 = bodyList[i];
+       var dx = b1.X - b2.X;
+       var dy = b1.Y - b2.Y;
+       var d2 = dx*dx + dy*dy;
+       if ( d2 > threshold )
+		selected.Add(b1.Id);
+   }
+   for(var k=0; k<3; k++) {
+   	map.SelectedItems = selected;
+	vv.Sleep(300);
+	map.SelectedItems = null;
+	vv.Sleep(300);
+   }
+   map.SelectedItems = selected; 
+}
 
+function MoveFormTo(g, f) {
+   g.BringToFront();
+   var newTop = f.Top - Math.floor((g.Height - f.Height) / 2);
+   g.SetBounds(f.Left + f.Width - 10, newTop, 0, 0, 3);
+}
+
+var msg = "Moved bodies: ";
 if ((pp.Name == "MapSnapshot") || (pp.Name == "MdsCluster")) {
     // Morphing between calling view and other open map snapshots.
     var initBody = New.BodyListClone(pp.BodyList);
@@ -22,14 +51,11 @@ if ((pp.Name == "MapSnapshot") || (pp.Name == "MdsCluster")) {
     for (var vw in vv.FindFormList("MapSnapshot"))
         if ((vw.TheForm !== f) && (vw.BodyList.Count == bsCount))
             vwList.Add(vw);
-    for (var vw in vwList) {
-        var g = vw.TheForm;
-        g.BringToFront();
-        var newTop = f.Top - Math.floor((g.Height - f.Height) / 2);
-        g.SetBounds(f.Left + f.Width - 10, newTop, 0, 0, 3);
+    for (var vw in vwList) { 
+	 MoveFormTo(vw.TheForm, f);
         msg += Animation(pp, vw.BodyList) + ", ";
     }
-    Animation(pp, initBody);
+    msg += Animation(pp, initBody);
     pp.Title = msg;
 } else {
     var initBody = New.BodyListClone(vv.Map.BodyList);
@@ -45,6 +71,7 @@ if ((pp.Name == "MapSnapshot") || (pp.Name == "MdsCluster")) {
         msg += Animation(vv.Map, vv.Dataset.ReadMapBodyList(n)) + ", ";
         fromName = n;
     }
+    msg += Animation(vv.Map, initBody);
     vv.Title = msg;
-    Animation(vv.Map, initBody);
 }
+
