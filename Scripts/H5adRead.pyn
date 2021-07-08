@@ -1,0 +1,19 @@
+import clr, scanpy, numpy
+
+clr.AddReference("System.Windows.Forms")
+from System.Windows.Forms import OpenFileDialog
+fd = OpenFileDialog()
+fd.Filter = "H5ad Files|*.h5ad"
+fd.ShowDialog()
+if fd.FileName == "":
+	quit()
+
+f = scanpy.read(fd.FileName)
+M = f.X
+M = M.astype(numpy.float32)
+if hasattr(M, 'todense'):
+    M = M.todense()
+
+New.HeatMap(M).Show()
+
+
