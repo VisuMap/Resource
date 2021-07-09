@@ -1,0 +1,28 @@
+import clr, scanpy, numpy
+
+clr.AddReference("System.Windows.Forms")
+from System.Windows.Forms import OpenFileDialog
+fd = OpenFileDialog()
+fd.Filter = "Loom Files|*.loom"
+fd.ShowDialog()
+if fd.FileName == "":
+	quit()
+
+f = scanpy.read_loom(fd.FileName, validate=False)
+
+M = f.X
+M = M.astype(numpy.float32)
+if hasattr(M, 'todense'):
+    M = M.todense()
+
+hm = New.HeatMap(M)
+hm.Show()
+
+nt = hm.GetNumberTable()
+if nt.Rows == len(f.obs_names):
+	for row in range(nt.Rows):
+		nt.RowSpecList[row].Id = str(f.obs_names[row])
+if nt.Columns == len(f.var_names):
+	for col in range(nt.Columns):
+		nt.ColumnSpecList[col].Id = str(f.var_names[col])
+
