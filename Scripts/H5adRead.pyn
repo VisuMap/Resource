@@ -14,6 +14,13 @@ M = M.astype(numpy.float32)
 if hasattr(M, 'todense'):
     M = M.todense()
 
-New.HeatMap(M).Show()
+hm = New.HeatMap(M)
+hm.Show()
 
+nt = hm.GetNumberTable()
+hm.Description = 'Imported from %s'%(fd.FileName)
+for row in range(nt.Rows):
+	nt.RowSpecList[row].Id = f.obs_names[row]
+for col in range(nt.Columns):
+	nt.ColumnSpecList[col].Id = f.var_names[col]
 
