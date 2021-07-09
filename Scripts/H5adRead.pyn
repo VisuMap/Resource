@@ -9,6 +9,7 @@ if fd.FileName == "":
 	quit()
 
 f = scanpy.read(fd.FileName)
+
 M = f.X
 M = M.astype(numpy.float32)
 if hasattr(M, 'todense'):
@@ -18,9 +19,9 @@ hm = New.HeatMap(M)
 hm.Show()
 
 nt = hm.GetNumberTable()
-hm.Description = 'Imported from %s'%(fd.FileName)
-for row in range(nt.Rows):
-	nt.RowSpecList[row].Id = f.obs_names[row]
-for col in range(nt.Columns):
-	nt.ColumnSpecList[col].Id = f.var_names[col]
-
+if nt.Rows == len(f.obs_names):
+	for row in range(nt.Rows):
+		nt.RowSpecList[row].Id = f.obs_names[row]
+if nt.Columns == len(f.var_names):
+	for col in range(nt.Columns):
+		nt.ColumnSpecList[col].Id = f.var_names[col]
