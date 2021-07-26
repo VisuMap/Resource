@@ -1,0 +1,90 @@
+# DualSorting.pyn
+#
+# Context menu script to perform dual sorting on a heatmap.
+#
+'''
+To install this script, select and run the following line:
+
+vv.GuiManager.SetCustomMenu('Dual Sorting', True, vv.CurrentScriptPath, 'HeatMap')
+
+To remove this context menu, select and run the following line:
+
+vv.GuiManager.RemoveCustomMenu('Dual Sorting')
+
+'''
+import math
+
+if pp.Name != "HeatMap":
+  vv.Message('Please call this script from the context menu of a heatmap view.')
+  quit()
+
+# Main settings
+mtrList = [ "Correlation.Standard Correlation", "EuclideanMetric", "Correlation.Cosine Distance" ]
+exa, ppr, mtr = [12.0, 4.0], [0.1, 0.1], [mtrList[2], mtrList[2]]
+epochs = 5000
+# Flag to save the learned order into the current atlas.
+saveResult = False
+
+pp.DisableReorder = False
+nt = pp.GetNumberTable()
+
+if saveResult:
+	at = vv.AtlasManager.OpenAtlas(None)
+	at.Show()
+
+def SaveSpectrum(tsne):
+	sp = tsne.SnapshotSpectrum()
+	sp.SortByValues()
+	if pp.SelectionMode == 0:
+		sp.Horizontal = False
+		sp.Width = 80
+		sp.Height = 750		
+		item = at.CaptureItem(sp)
+		item.IconWidth = 16
+		item.IconHeight = 0
+		item.Redraw()
+	else:
+		item = at.CaptureItem(sp)
+	sp.Close()
+
+def SortTable(T, mt, epochs, ex, pr):
+	tsne = New.TsneSorter(T, mt)
+	tsne.MaxLoops = epochs
+	tsne.InitExaggeration = ex
+	tsne.PerplexityRatio = pr
+	tsne.RefreshFreq = 50
+	tsne.Show().Start()
+	if saveResult:
+		SaveSpectrum(tsne)
+	if math.isnan(tsne.ItemList[0].Value):
+		vv.Message("Training degraded!\nPlease try with smaller initial exaggeration.")
+		quit()
+	tsne.Close()
+
+pp.Title = 'Sorting Rows...'
+pp.SelectionMode = 0
+SortTable(nt, mtr[0], epochs, exa[0], ppr[0])
+
+nt = nt.Transpose2()
+
+pp.Title = 'Sorting Columns...'
+pp.SelectionMode = 1
+SortTable(nt, mtr[1], epochs, exa[1], ppr[1])
+
+pp.DisableReorder = True
+
+if saveResult:
+	cnt = at.Items.Count - 2
+	ss = "@def ShowHeatMap(rowItem, colItem):\n\
+	am = vv.AtlasManager \n\
+	rowIds =  [x.Id for x in am.ReadValueList(None, rowItem)] \n\
+	colIds = [x.Id for x in am.ReadValueList(None, colItem)] \n\
+	nt = vv.GetNumberTableView().SelectRowsByIdView(rowIds) \n\
+	nt.ReorderRows(rowIds) \n\
+	nt.ReorderColumns(colIds) \n\
+	nt.ShowHeatMap() \n\
+\n\
+ShowHeatMap('%s', '%s')"%(at.Items[cnt].Id, at.Items[cnt+1].Id)
+	at.Items[cnt].Script = ss
+	at.Items[cnt+1].Script = ss
+	at.Close()
