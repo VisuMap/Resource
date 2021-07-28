@@ -59,6 +59,11 @@ def SortTable(T, mt, epochs, ex, pr):
 	if math.isnan(tsne.ItemList[0].Value):
 		vv.Message("Training degraded!\nPlease try with smaller initial exaggeration.")
 		quit()
+	if pp.SelectionMode == 0:
+		kName = 'RowKeys'
+	else:
+		kName = 'ColKeys'
+	vv.SetObject(kName, tsne.ItemList)
 	tsne.Close()
 
 pp.Title = 'Sorting Rows...'

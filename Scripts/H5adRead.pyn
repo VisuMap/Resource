@@ -25,3 +25,4 @@ if nt.Rows == len(f.obs_names):
 if nt.Columns == len(f.var_names):
 	for col in range(nt.Columns):
 		nt.ColumnSpecList[col].Id = f.var_names[col]
+hm.CentralizeColorSpectrum();

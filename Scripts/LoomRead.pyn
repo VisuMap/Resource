@@ -17,6 +17,7 @@ if hasattr(M, 'todense'):
 
 hm = New.HeatMap(M)
 hm.Show()
+hm.CentralizeColorSpectrum();
 
 nt = hm.GetNumberTable()
 if nt.Rows == len(f.obs_names):
