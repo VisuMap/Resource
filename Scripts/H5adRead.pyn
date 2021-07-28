@@ -1,3 +1,5 @@
+# Import a h5ad format file into a heatmap view.
+#
 import clr, scanpy, numpy
 
 clr.AddReference("System.Windows.Forms")
