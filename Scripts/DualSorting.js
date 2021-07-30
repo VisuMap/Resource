@@ -20,15 +20,14 @@ if (pp.Name != "HeatMap"){
   vv.Return(0);
 }
 
-
 var RowSortingKeys, ColumnSortingKeys;
 
 function SortTable(T, mt, epochs, ex, pr) {
-	let tsne = New.TsneSorter(T, mt);
+	var tsne = New.TsneSorter(T, mt);
 	tsne.MaxLoops = epochs;
 	tsne.InitExaggeration = ex;
 	tsne.PerplexityRatio = pr;
-	tsne.RefreshFreq = 50;
+	tsne.RefreshFreq = 250;
 	tsne.Show().Start();
 	if (isNaN(tsne.ItemList[0].Value)) {
 		vv.Message("Training degraded!\nPlease try with smaller initial exaggeration.");
@@ -41,10 +40,11 @@ function SortTable(T, mt, epochs, ex, pr) {
 	tsne.Close();
 }
 
+function DSMain()
 {
-	let mtrList = [ "Correlation.Standard Correlation", "EuclideanMetric", "Correlation.Cosine Distance" ]
+	var mtrList = [ "Correlation.Standard Correlation", "EuclideanMetric", "Correlation.Cosine Distance" ]
 	pp.DisableReorder = false;
-	let dsTable = pp.GetNumberTable();
+	var dsTable = pp.GetNumberTable();
 	
 	pp.Title = 'Sorting Rows...';
 	pp.SelectionMode = 0;
@@ -54,7 +54,10 @@ function SortTable(T, mt, epochs, ex, pr) {
 	pp.Title = 'Sorting Columns...';
 	pp.SelectionMode = 1;
 	SortTable(dsTable, mtrList[2], 5000, 4.0, 0.1);
-	
+	pp.Title = 'Sorting Completed!';
 	pp.DisableReorder = true;
 }
+
+DSMain();
+
 
