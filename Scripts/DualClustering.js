@@ -31,6 +31,8 @@ var cs = New.CsObject(`
 	}
 `);
 
+
+
 function DCMain() {
 	var nt = pp.GetNumberTable();
 	var mds = New.MdsCluster(nt);
@@ -70,10 +72,12 @@ function DCMain() {
 	pp.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
 	mds.Close();
 	
-	var sz = 320;
-	pp.TheForm.SetBounds(600, 500, 800, 540);
-	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 10, pp.TheForm.Top, sz, sz);
-	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 10, sz, sz);
+	var sz = 480;
+	var winWidth = 800;
+	var winHeight = host.toInt32(winWidth * nt.Rows / nt.Columns);
+	pp.TheForm.SetBounds(600, 500, winWidth, winHeight);
+	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 15, pp.TheForm.Top, sz, sz);
+	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 8, sz, sz);
 }
 
 DCMain();
