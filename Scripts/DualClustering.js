@@ -39,15 +39,18 @@ function DCMain() {
 	mds.Show();
 	mds.Is3D = false;
 	mds.Metric="Correlation.Cosine Distance";
-	mds.ClusterAlgorithm = 4;
+	//mds.ClusterAlgorithm = 3;  // for DBSCAN algorithm
+	mds.ClusterAlgorithm = 4;  // for HDBSCAN algorithm
 	mds.AutoClustering = false;
 	mds.AutoNormalizing = false;
 	var frm = mds.TheForm;
 	frm.TsneExaSmoothen = true;
 	frm.TsneMaxLoops = 5000;
 	frm.HdbClusterNoise = true;
+	frm.DbsClusterNoise = true;
 		
 	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [4, 100, 6.0, 0.05];
+	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.05];
 	mds.Reset().Start().ClusterData();
 
 	var rowClusters = mds.ClustersFound;
@@ -59,7 +62,8 @@ function DCMain() {
 	pp.Redraw();
 
 	mds.SetTrainingData(nt.Transpose2());
-	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [4, 100, 6.0, 0.05];
+	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [4, 100, 4.0, 0.05];
+	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.05];
 	mds.Reset().Start().ClusterData();
 
 	var colClusters = mds.ClustersFound;
@@ -72,9 +76,9 @@ function DCMain() {
 	pp.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
 	mds.Close();
 	
-	var sz = 480;
-	var winWidth = 800;
-	var winHeight = host.toInt32(winWidth * nt.Rows / nt.Columns);
+	var sz = 420;
+	var winWidth = 840;
+	var winHeight = 640;
 	pp.TheForm.SetBounds(600, 500, winWidth, winHeight);
 	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 15, pp.TheForm.Top, sz, sz);
 	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 8, sz, sz);
