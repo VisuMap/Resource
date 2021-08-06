@@ -1,14 +1,19 @@
 # import h5 format files and show it in a heatmap.
 #
-import clr, scanpy, numpy, tables, sys, collections
+import scanpy, numpy, tables, sys, collections
 import scipy.sparse as sp_sparse
 
-clr.AddReference("System.Windows.Forms")
-from System.Windows.Forms import OpenFileDialog
-ofd = OpenFileDialog()
-ofd.Filter = "H5 Files|*.h5"
-ofd.ShowDialog()
-if ofd.FileName == "":
+def PromptFile( filter ):
+	import clr
+	clr.AddReference("System.Windows.Forms")
+	from System.Windows.Forms import OpenFileDialog
+	fd = OpenFileDialog()
+	fd.Filter = filter
+	fd.ShowDialog()
+	return fd.FileName
+
+fileName = PromptFile("H5 Files|*.h5")
+if fileName == "":
 	quit()
  
 CountMatrix = collections.namedtuple('CountMatrix', ['feature_ref', 'barcodes', 'matrix'])
@@ -38,7 +43,7 @@ def get_matrix_from_h5(filename):
          
         return CountMatrix(feature_ref, barcodes, matrix)
  
-CM = get_matrix_from_h5(ofd.FileName)
+CM = get_matrix_from_h5(fileName)
 M = CM.matrix
 M = M.toarray();
 

@@ -2,15 +2,20 @@
 #
 import clr, scanpy, numpy
 
-clr.AddReference("System.Windows.Forms")
-from System.Windows.Forms import OpenFileDialog
-fd = OpenFileDialog()
-fd.Filter = "H5ad Files|*.h5ad"
-fd.ShowDialog()
-if fd.FileName == "":
+def PromptFile( filter ):
+	import clr
+	clr.AddReference("System.Windows.Forms")
+	from System.Windows.Forms import OpenFileDialog
+	fd = OpenFileDialog()
+	fd.Filter = filter
+	fd.ShowDialog()
+	return fd.FileName
+
+fileName = PromptFile("H5ad Files|*.h5ad")
+if fileName == "":
 	quit()
 
-f = scanpy.read(fd.FileName)
+f = scanpy.read(fileName)
 
 M = f.X
 M = M.astype(numpy.float32)

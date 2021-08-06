@@ -1,16 +1,21 @@
 # Import a loom format file into a heatmap view.
 #
-import clr, scanpy, numpy
+import scanpy, numpy
 
-clr.AddReference("System.Windows.Forms")
-from System.Windows.Forms import OpenFileDialog
-fd = OpenFileDialog()
-fd.Filter = "Loom Files|*.loom"
-fd.ShowDialog()
-if fd.FileName == "":
+def PromptFile( filter ):
+	import clr
+	clr.AddReference("System.Windows.Forms")
+	from System.Windows.Forms import OpenFileDialog
+	fd = OpenFileDialog()
+	fd.Filter = filter
+	fd.ShowDialog()
+	return fd.FileName
+
+fileName = PromptFile("Loom Files|*.loom")
+if fileName == "":
 	quit()
 
-f = scanpy.read_loom(fd.FileName, validate=False)
+f = scanpy.read_loom(fileName, validate=False)
 
 M = f.X
 M = M.astype(numpy.float32)
