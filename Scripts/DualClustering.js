@@ -56,7 +56,7 @@ function DCMain() {
 	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.1];
 		
 	mds.Metric= mtrList[0];
-	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [4, 100, 6.0, 0.1];
+	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [3, 50, 6.0, 0.1];
 	mds.Reset().Start().ClusterData();
 
 	var rowClusters = mds.ClustersFound;
@@ -69,7 +69,7 @@ function DCMain() {
 
 	mds.Metric= mtrList[0];
 	mds.SetTrainingData(nt.Transpose2());
-	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [4, 100, 4.0, 0.1];
+	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [3, 50, 4.0, 0.1];
 	mds.Reset().Start().ClusterData();
 
 	var colClusters = mds.ClustersFound;
@@ -80,8 +80,10 @@ function DCMain() {
 	cs.CopyColumnTypes(nt.ColumnSpecList, mds.BodyList);	
 	pp.Redraw();
 	pp.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
-	//pp.ClickContextMenu("Utilities/Sort Columns on Type");
-	//pp.ClickContextMenu("Utilities/Sort Rows on Type");
+	/*
+	pp.ClickContextMenu("Utilities/Sort Columns on Type");
+	pp.ClickContextMenu("Utilities/Sort Rows on Type");
+	*/
 	mds.Close();
 	
 	var sz = 450;
