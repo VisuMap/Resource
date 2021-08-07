@@ -46,11 +46,13 @@ function DCMain() {
 	mds.ClusterAlgorithm = 4;  // for HDBSCAN algorithm
 	mds.AutoClustering = false;
 	mds.AutoNormalizing = false;
+	mds.RefreshFreq = 50;
 	var frm = mds.TheForm;
 	frm.TsneExaSmoothen = true;
 	frm.TsneMaxLoops = 5000;
 	frm.HdbClusterNoise = true;
 	frm.DbsClusterNoise = true;
+
 	//mds.ClusterAlgorithm = 3;  // for DBSCAN algorithm
 	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.1];
 	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.1];

@@ -58,10 +58,13 @@ hm.CentralizeColorSpectrum();
 nt = hm.GetNumberTable()
 
 idList = CM.feature_ref['id']
+uf = New.UniqueNameFinder()
 if nt.Rows == len(idList):
 	for row in range(nt.Rows):
-		nt.RowSpecList[row].Id = str(idList[row])
+		nt.RowSpecList[row].Id = uf.LookupName(str(idList[row]))
+
+uf.Reset()
 if nt.Columns == len(CM.barcodes):
 	for col in range(nt.Columns):
-		nt.ColumnSpecList[col].Id = str(CM.barcodes[col])
+		nt.ColumnSpecList[col].Id = uf.LookupName(str(CM.barcodes[col]))
 

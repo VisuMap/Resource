@@ -26,10 +26,14 @@ hm = New.HeatMap(M)
 hm.Show()
 
 nt = hm.GetNumberTable()
+uf = New.UniqueNameFinder()
+
 if nt.Rows == len(f.obs_names):
 	for row in range(nt.Rows):
-		nt.RowSpecList[row].Id = f.obs_names[row]
+		nt.RowSpecList[row].Id = uf.LookupName(f.obs_names[row])
+
+uf.Reset()
 if nt.Columns == len(f.var_names):
 	for col in range(nt.Columns):
-		nt.ColumnSpecList[col].Id = f.var_names[col]
+		nt.ColumnSpecList[col].Id = uf.LookupName(f.var_names[col])
 hm.CentralizeColorSpectrum();

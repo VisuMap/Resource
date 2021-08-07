@@ -27,10 +27,13 @@ hm.Show()
 hm.CentralizeColorSpectrum();
 
 nt = hm.GetNumberTable()
+uf = New.UniqueNameFinder();
+
 if nt.Rows == len(f.obs_names):
 	for row in range(nt.Rows):
-		nt.RowSpecList[row].Id = str(f.obs_names[row])
+		nt.RowSpecList[row].Id = uf.LookupName( str(f.obs_names[row]) )
+
+uf.Reset();
 if nt.Columns == len(f.var_names):
 	for col in range(nt.Columns):
-		nt.ColumnSpecList[col].Id = str(f.var_names[col])
-
+		nt.ColumnSpecList[col].Id = uf.LookupName (str(f.var_names[col]))

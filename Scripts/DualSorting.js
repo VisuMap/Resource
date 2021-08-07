@@ -30,7 +30,7 @@ function SortTable(T, mt, epochs, ex, pr) {
 	tsne.MaxLoops = epochs;
 	tsne.InitExaggeration = ex;
 	tsne.PerplexityRatio = pr;
-	tsne.RefreshFreq = 250;
+	tsne.RefreshFreq = 50;
 	tsne.Show().Start();
 	if (isNaN(tsne.ItemList[0].Value)) {
 		vv.Message("Training degraded!\nPlease try with smaller initial exaggeration.");
@@ -54,8 +54,8 @@ function DSMain() {
 	
 	pp.Title = 'Sorting Columns...';
 	pp.SelectionMode = 1;
-	SortTable(dsTable.Transpose2(), mtrList[0], 5000, 4.0, 0.05);	
-
+	var dsTable2 = dsTable.Transpose2();
+	SortTable(dsTable2, mtrList[0], 5000, 4.0, 0.1);	
 	pp.Title = 'Sorting Completed!';	
 	pp.DisableReorder = true;
 }
