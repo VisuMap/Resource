@@ -70,9 +70,11 @@ function DCMain() {
 	pp.Redraw();
 
 	mds.Metric= mtrList[0];
-	mds.SetTrainingData(nt.Transpose2());
+	var nt2 = nt.Transpose2();
+	mds.SetTrainingData(nt2);
 	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [3, 50, 4.0, 0.1];
 	mds.Reset().Start().ClusterData();
+	nt2.FreeRef();
 
 	var colClusters = mds.ClustersFound;
        if ( typeof(ColumnSortingKeys) != 'undefined' )
@@ -94,6 +96,8 @@ function DCMain() {
 	pp.TheForm.SetBounds(600, 500, winWidth, winHeight);
 	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 15, pp.TheForm.Top, sz, sz);
 	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 8, sz, sz);
+
+	//colMap.Close(); rowMap.Close();
 }
 
 DCMain();

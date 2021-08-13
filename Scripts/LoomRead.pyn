@@ -18,7 +18,7 @@ if fileName == "":
 f = scanpy.read_loom(fileName, validate=False)
 
 M = f.X
-M = M.astype(numpy.float32)
+M = numpy.ascontiguousarray(M, dtype=np.float32)
 if hasattr(M, 'todense'):
     M = M.todense()
 

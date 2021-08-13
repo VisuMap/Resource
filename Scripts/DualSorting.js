@@ -50,12 +50,13 @@ function DSMain() {
 	
 	pp.Title = 'Sorting Rows...';
 	pp.SelectionMode = 0;
-	SortTable(dsTable, mtrList[0], 5000, 6.0, 0.1);
+	SortTable(dsTable, mtrList[0], 5000, 6, 0.1);
 	
 	pp.Title = 'Sorting Columns...';
 	pp.SelectionMode = 1;
 	var dsTable2 = dsTable.Transpose2();
-	SortTable(dsTable2, mtrList[0], 5000, 4.0, 0.1);	
+	SortTable(dsTable2, mtrList[0], 5000, 4, 0.1);	
+       dsTable2.FreeRef();
 	pp.Title = 'Sorting Completed!';	
 	pp.DisableReorder = true;
 }

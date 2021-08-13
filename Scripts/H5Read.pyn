@@ -1,7 +1,8 @@
 # import h5 format files and show it in a heatmap.
 #
-import scanpy, numpy, tables, sys, collections
+import scanpy, tables, sys, collections
 import scipy.sparse as sp_sparse
+import numpy as np
 
 def PromptFile( filter ):
 	import clr
@@ -45,26 +46,39 @@ def get_matrix_from_h5(filename):
  
 CM = get_matrix_from_h5(fileName)
 M = CM.matrix
-M = M.toarray();
 
+# filter out rows and columns with low expression.
+RowSum = np.array(M.sum(axis=1)).reshape(-1)
+ColSum = np.array(M.sum(axis=0)).reshape(-1)
+minRow, minCol = 0.01*M.shape[1], 0.01*M.shape[0]
+iRow = np.where(RowSum>minRow)[0]
+iCol = np.where(ColSum>minCol)[0]
+M = M[iRow, :]
+M = M[:, iCol]
 
-M = M.astype(numpy.float32)
+# convert M to numpy(float32).
+M = M.toarray()
+M = np.ascontiguousarray(M, dtype=np.float32)
 if hasattr(M, 'todense'):
     M = M.todense()
-hm = New.HeatMap(M)
-hm.Show()
-hm.CentralizeColorSpectrum();
 
-nt = hm.GetNumberTable()
+# set the row and column identifies.
+nt = mm.ToTable(M)
 
-idList = CM.feature_ref['id']
+rowIdList = CM.feature_ref['id']
+colIdList = CM.barcodes
 uf = New.UniqueNameFinder()
-if nt.Rows == len(idList):
+MatrixShape = CM.matrix.shape
+if MatrixShape[0] == len(rowIdList):	
 	for row in range(nt.Rows):
-		nt.RowSpecList[row].Id = uf.LookupName(str(idList[row]))
-
+		rId = rowIdList[iRow[row]].decode('utf-8')
+		nt.RowSpecList[row].Id = uf.LookupName(rId)
 uf.Reset()
-if nt.Columns == len(CM.barcodes):
+if MatrixShape[1] == len(colIdList):	
 	for col in range(nt.Columns):
-		nt.ColumnSpecList[col].Id = uf.LookupName(str(CM.barcodes[col]))
+		cId = colIdList[iCol[col]].decode('utf-8')
+		nt.ColumnSpecList[col].Id = uf.LookupName(cId)
 
+hm = New.HeatMap(nt)
+hm.Show()
+hm.CentralizeColorSpectrum()
