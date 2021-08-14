@@ -46,39 +46,29 @@ def get_matrix_from_h5(filename):
  
 CM = get_matrix_from_h5(fileName)
 M = CM.matrix
+MRows, MColumns = M.shape
+minRow, minCol = 0.01*MColumns, 0.01*MRows
 
 # filter out rows and columns with low expression.
 RowSum = np.array(M.sum(axis=1)).reshape(-1)
-ColSum = np.array(M.sum(axis=0)).reshape(-1)
-minRow, minCol = 0.01*M.shape[1], 0.01*M.shape[0]
 iRow = np.where(RowSum>minRow)[0]
+ColSum = np.array(M.sum(axis=0)).reshape(-1)
 iCol = np.where(ColSum>minCol)[0]
 M = M[iRow, :]
 M = M[:, iCol]
 
 # convert M to numpy(float32).
-M = M.toarray()
-M = np.ascontiguousarray(M, dtype=np.float32)
-if hasattr(M, 'todense'):
-    M = M.todense()
-
-# set the row and column identifies.
+M = M.todense('C').astype(np.float32)
 nt = mm.ToTable(M)
 
-rowIdList = CM.feature_ref['id']
-colIdList = CM.barcodes
+rowIdList = CM.feature_ref['id'][iRow]
+colIdList = CM.barcodes[iCol]
 uf = New.UniqueNameFinder()
-MatrixShape = CM.matrix.shape
-if MatrixShape[0] == len(rowIdList):	
-	for row in range(nt.Rows):
-		rId = rowIdList[iRow[row]].decode('utf-8')
-		nt.RowSpecList[row].Id = uf.LookupName(rId)
+for row, id in enumerate(rowIdList):
+	nt.RowSpecList[row].Id = uf.LookupName(id.decode('utf-8'))
 uf.Reset()
-if MatrixShape[1] == len(colIdList):	
-	for col in range(nt.Columns):
-		cId = colIdList[iCol[col]].decode('utf-8')
-		nt.ColumnSpecList[col].Id = uf.LookupName(cId)
+for col, id in enumerate(colIdList):
+	nt.ColumnSpecList[col].Id = uf.LookupName(id.decode('utf-8'))
 
-hm = New.HeatMap(nt)
-hm.Show()
+hm = New.HeatMap(nt).Show()
 hm.CentralizeColorSpectrum()
