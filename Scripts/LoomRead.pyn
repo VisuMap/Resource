@@ -18,22 +18,19 @@ if fileName == "":
 f = scanpy.read_loom(fileName, validate=False)
 
 M = f.X
-M = numpy.ascontiguousarray(M, dtype=np.float32)
-if hasattr(M, 'todense'):
-    M = M.todense()
+if hasattr(M, 'todense'): M = M.todense()
+M = numpy.ascontiguousarray(M, dtype=numpy.float32)
 
-hm = New.HeatMap(M)
-hm.Show()
-hm.CentralizeColorSpectrum();
 
-nt = hm.GetNumberTable()
-uf = New.UniqueNameFinder();
-
+nt = mm.ToTable(M)
+uf = New.UniqueNameFinder()
 if nt.Rows == len(f.obs_names):
-	for row in range(nt.Rows):
-		nt.RowSpecList[row].Id = uf.LookupName( str(f.obs_names[row]) )
-
+	for row, id in enumerate(f.obs_names):
+		nt.RowSpecList[row].Id = uf.LookupName(str(id))
 uf.Reset();
 if nt.Columns == len(f.var_names):
-	for col in range(nt.Columns):
-		nt.ColumnSpecList[col].Id = uf.LookupName (str(f.var_names[col]))
+	for col, id in enumerate(f.var_names):
+		nt.ColumnSpecList[col].Id = uf.LookupName(str(id))
+
+hm = New.HeatMap(nt).Show()
+hm.CentralizeColorSpectrum()
