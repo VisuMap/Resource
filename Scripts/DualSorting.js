@@ -44,18 +44,18 @@ function SortTable(T, mt, epochs, ex, pr) {
 }
 
 function DSMain() {
-	var mtrList = [ "Correlation.Cosine Distance", "EuclideanMetric", "Correlation.Standard Correlation"];
+	var mtr = {'cos':'Correlation.Cosine Distance', 'euc':'EuclideanMetric', 'cor':'Correlation.Standard Correlation'};
 	pp.DisableReorder = false;
 	var dsTable = pp.GetNumberTable();
 	
 	pp.Title = 'Sorting Rows...';
 	pp.SelectionMode = 0;
-	SortTable(dsTable, mtrList[0], 5000, 6, 0.1);
+	SortTable(dsTable, mtr.cos, 5000, 6, 0.1);
 	
 	pp.Title = 'Sorting Columns...';
 	pp.SelectionMode = 1;
 	var dsTable2 = dsTable.Transpose2();
-	SortTable(dsTable2, mtrList[0], 5000, 4, 0.1);	
+	SortTable(dsTable2, mtr.cos, 5000, 4, 0.1);	
        dsTable2.FreeRef();
 	pp.Title = 'Sorting Completed!';	
 	pp.DisableReorder = true;

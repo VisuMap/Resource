@@ -37,58 +37,56 @@ var cs = New.CsObject(`
 	}
 `);
 
-function DCMain() {
-	var nt = pp.GetNumberTable();
-	var mds = New.MdsCluster(nt);
-	mds.Show();
+function RunMdsCluster(mds, mtr, minPoints, minSize, initExa, ppRatio) {
 	mds.Is3D = false;
-	var mtrList = [ "Correlation.Cosine Distance", "EuclideanMetric", "Correlation.Standard Correlation"];	
+	mds.Metric = mtr;
 	mds.ClusterAlgorithm = 4;  // for HDBSCAN algorithm
 	mds.AutoClustering = false;
 	mds.AutoNormalizing = false;
 	mds.RefreshFreq = 50;
-	var frm = mds.TheForm;
+	mds.PerplexityRatio = ppRatio;
+	var frm= mds.TheForm;
+	frm.HdbMinPoints = minPoints;
+	frm.HdbMinClusterSize = minSize;
+	frm.TsneExaFactor = initExa;
 	frm.TsneExaSmoothen = true;
 	frm.TsneMaxLoops = 5000;
-	frm.HdbClusterNoise = true;
 	frm.DbsClusterNoise = true;
-
-	//mds.ClusterAlgorithm = 3;  // for DBSCAN algorithm
-	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.1];
-	//[frm.DbsMinPoints, frm.DbsEpsilonRatio, frm.TsneExaFactor, mds.PerplexityRatio ] = [25, 1.0, 6.0, 0.1];
-		
-	mds.Metric= mtrList[0];
-	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [3, 50, 6.0, 0.1];
 	mds.Reset().Start().ClusterData();
+	var mpView = mds.Is3D ? mds.Show3DView() : mds.Show2DView();
+	mpView.NormalizeView();
+	return [mds.ClustersFound, mpView];
+}
 
-	var rowClusters = mds.ClustersFound;
+function DCMain() {
+	var nt = pp.GetNumberTable();
+	var mds = New.MdsCluster(nt);
+	mds.Show();
+	var mtr = {'cos':'Correlation.Cosine Distance', 'euc':'EuclideanMetric', 'cor':'Correlation.Standard Correlation'};
+		
+	const [rowClusters, rowMap] = RunMdsCluster(mds, mtr.cos, 3, 50, 6.0, 0.1);
+
        if ( typeof(RowSortingKeys) != 'undefined' )
 		cs.NormalizeColoring(mds.BodyList, RowSortingKeys, rowClusters);
-	var rowMap = mds.Is3D ? mds.Show3DView() : mds.Show2DView();
-	rowMap.NormalizeView();
 	cs.CopyRowTypes(nt.RowSpecList, mds.BodyList);
 	pp.Redraw();
 
-	mds.Metric= mtrList[0];
 	var nt2 = nt.Transpose2();
 	mds.SetTrainingData(nt2);
-	[frm.HdbMinPoints, frm.HdbMinClusterSize, frm.TsneExaFactor, mds.PerplexityRatio ] = [3, 50, 4.0, 0.1];
-	mds.Reset().Start().ClusterData();
+	const [colClusters, colMap] = RunMdsCluster(mds, mtr.cos, 3, 50, 4.0, 0.1);
 	nt2.FreeRef();
 
-	var colClusters = mds.ClustersFound;
        if ( typeof(ColumnSortingKeys) != 'undefined' )
 		cs.NormalizeColoring(mds.BodyList, ColumnSortingKeys, colClusters);
-	var colMap = mds.Is3D ? mds.Show3DView() : mds.Show2DView();
-	colMap.NormalizeView();
 	cs.CopyColumnTypes(nt.ColumnSpecList, mds.BodyList);	
 	pp.Redraw();
 	pp.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
+
+	mds.Close();
 	/*
 	pp.ClickContextMenu("Utilities/Sort Columns on Type");
 	pp.ClickContextMenu("Utilities/Sort Rows on Type");
 	*/
-	mds.Close();
 	
 	var sz = 450;
 	var winWidth = sz;
@@ -97,7 +95,20 @@ function DCMain() {
 	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 15, pp.TheForm.Top, sz, sz);
 	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 8, sz, sz);
 
-	//colMap.Close(); rowMap.Close();
+	// context menu to the row and column maps.
+	var CaptureColor = 
+`@
+hm = vv.EventSource.Item
+nt = hm.GetNumberTable()
+spList = nt.RowSpecList if (pp.Tag == 0) else nt.ColumnSpecList
+for i, b in enumerate(pp.BodyList):
+	spList[i].Type = b.Type
+hm.Redraw()`;
+	[rowMap.Tag, colMap.Tag] = [0, 1];
+	for( var mp of [rowMap, colMap] ) 
+		mp.AddContextMenu("Captur Coloring", CaptureColor,  pp, 
+			"C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png", 
+			"Push the cluster coloring to the heatmap");
 }
 
 DCMain();
