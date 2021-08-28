@@ -1,0 +1,42 @@
+# Import matrix.mtx.gz files
+#
+import scanpy, gzip
+import numpy as np
+from scipy.io import mmread
+
+def PromptFile( filter ):
+	import clr
+	clr.AddReference("System.Windows.Forms")
+	from System.Windows.Forms import OpenFileDialog
+	fd = OpenFileDialog()
+	fd.Filter = filter
+	fd.ShowDialog()
+	return fd.FileName
+
+fileName = PromptFile("Matrix Counts|*matrix.mtx.gz")
+if fileName == "":
+	quit()
+
+tb = mmread(fileName)
+tb = tb.toarray()
+tb = np.matrix(tb.transpose())
+tb = tb.astype(np.float64)
+nt = mm.ToTable(tb)
+
+featureFile = fileName[:-13] + 'features.tsv.gz'
+with gzip.open(featureFile) as f:
+	lines = f.readlines()
+if ( len(lines)) == nt.Columns:
+	uf = New.UniqueNameFinder()
+	for i in range(nt.Columns):
+		nt.ColumnSpecList[i].Id = uf.LookupName(lines[i].decode('utf-8'))
+
+barcodeFile = fileName[:-13] + 'barcodes.tsv.gz'
+with gzip.open(barcodeFile) as f:
+	lines = f.readlines()
+if ( len(lines)) == nt.Rows:
+	uf = New.UniqueNameFinder()
+	for i in range(nt.Rows):
+		nt.RowSpecList[i].Id = uf.LookupName(lines[i].decode('utf-8'))
+
+nt.ShowHeatMap()
