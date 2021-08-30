@@ -1,4 +1,8 @@
 // AtlasHelp.js
+//
+// Help functions.
+//
+
 function SortTable(T, mt, epochs, ex, pr) {
 	var tsne = New.TsneSorter(T, mt);
 	tsne.MaxLoops = epochs;

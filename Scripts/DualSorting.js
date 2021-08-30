@@ -6,17 +6,23 @@ Description: Context menu script to perform dual sorting on a heatmap.
 
 To install Single-Cell-Atlas related menus mark and run the following statements:
 
-vv.GuiManager.SetCustomMenu("Atlas/Import Loom", true, vv.CurrentScriptDirectory + "/LoomRead.pyn", "MainForm");
-vv.GuiManager.SetCustomMenu("Atlas/Import H5AD", true, vv.CurrentScriptDirectory + "/H5adRead.pyn", "MainForm");
-vv.GuiManager.SetCustomMenu("Atlas/Import H5", true, vv.CurrentScriptDirectory + "/H5Read.pyn", "MainForm");
-vv.GuiManager.SetCustomMenu("Atlas/Import Matrix", true, vv.CurrentScriptDirectory + "/MatrixRead.pyn", "MainForm");
-vv.GuiManager.SetCustomMenu("Atlas/Dual Sorting", true, vv.CurrentScriptDirectory + "/DualSorting.js", "HeatMap");
-vv.GuiManager.SetCustomMenu("Atlas/Dual Clustering", true, vv.CurrentScriptDirectory + "/DualClustering.js", "HeatMap");
+function AddMenu(label, script, formName) { 
+	vv.GuiManager.SetCustomMenu("Atlas/" + label, true, vv.CurrentScriptDirectory + "/" + script, formName);
+}
+AddMenu("Import Loom", "LoomRead.pyn", "MainForm");
+AddMenu("Import H5AD", "H5adRead.pyn", "MainForm");
+AddMenu("Import H5", "H5Read.pyn", "MainForm");
+AddMenu("Import Matrix", "MatrixRead.pyn", "MainForm");
+AddMenu("Dual Sorting", "DualSorting.js", "HeatMap");
+AddMenu("Dual Clustering", "DualClustering.js", "HeatMap");
+AddMenu("Active Genes", "ShowActiveGenes.js", "HeatMap");
 
 To remove the menus:
 
 vv.GuiManager.RemoveCustomMenu("Atlas/");
 */
+
+vv.GuiManager.Se
 
 var doClustering = vv.ModifierKeys.ControlPressed;
 
@@ -39,7 +45,7 @@ function DSMain() {
 	pp.Title = 'Sorting Columns...';
 	pp.SelectionMode = 1;
 	var dsTable2 = dsTable.Transpose2();
-	cs.ShiftTable(dsTable2, 0.250);
+	cs.ShiftTable(dsTable2, 1.0);
 	SortTable(dsTable2, mtr.cos, 5000, 4, 0.1);	
        dsTable2.FreeRef();
 	pp.Title = 'Sorting Completed!';	

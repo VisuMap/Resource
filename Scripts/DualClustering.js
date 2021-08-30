@@ -18,7 +18,7 @@ function DCMain() {
 	pp.Redraw();
 
 	var nt2 = nt.Transpose2();
-	cs.ShiftTable(nt2, 0.25);
+	cs.ShiftTable(nt2, 1.0);
 	mds.SetTrainingData(nt2);
 	const [colClusters, colMap] = RunMdsCluster(mds, mtr.cos, 10, 250, 4.0, 0.1);
 	nt2.FreeRef();
