@@ -137,9 +137,14 @@ var cs = New.CsObject(`
 	}
 
 	public void SetRange(INumberTable expTable, IBarView bv) {
-		double maxV = expTable.MaximumValue();
-		double minV = expTable.MinimumValue();
-		bv.UpperLimit = 20.0;
+		double[] colMean = expTable.ColumnMean().Select(it=>it.Value).ToArray();
+		Array.Sort(colMean);
+		Array.Reverse(colMean);
+		int n = (int)(0.15 * colMean.Length);		
+		double sum = 0;
+		for(int i=0; i<n; i++)
+			sum += colMean[i] * colMean[i];
+		bv.UpperLimit = 3* Math.Sqrt(sum/n);
 		bv.LowerLimit = 0;
 	}
 `);

@@ -5,6 +5,13 @@
 //
 var expTable = pp.GetNumberTable();
 var geneMap = vv.FindWindow("Gene Map");
+var cellMap = vv.FindWindow("Cell Map");
+
+if ( (cellMap==null) || (geneMap==null) ) {
+	vv.Message("Cell/Gene map not present!\nPlease run DualClustering!");
+	vv.Return();
+}
+vv.SelectedItems = null;
 var sp = geneMap.NewSnapshot();
 
 sp.GlyphSet="Ordered Glyphs";
@@ -14,6 +21,8 @@ sp.Width = geneMap.Width;
 sp.Height = geneMap.Height;
 sp.Title = "Active Genes";
 sp.ShowMarker(false);
+cellMap.ShowMarker(true);
+geneMap.ShowMarker(false);
 
 var bv = New.BarView(expTable.SelectRows(New.IntArray(0)));
 var dLeft = 24;
@@ -23,8 +32,10 @@ bv.Left = pp.Left + dLeft;
 bv.Width = pp.Width - dLeft;
 bv.Height = sp.Height/2;
 bv.AutoScaling = true;
+bv.Horizontal = false;
+bv.Title = "Cell Expression Profile";
 sp.Tag = bv;
-vv.FindWindow("Cell Map").ShowMarker(true);
+bv.Redraw();
 
 pp.SelectionMode = 0;
 vv.EventManager.OnItemsSelected("!cs.ShowActiveGenes(vv.EventSource.Item, expTable, sp);", sp);
