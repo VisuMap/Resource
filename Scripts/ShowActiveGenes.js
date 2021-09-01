@@ -15,7 +15,7 @@ sp.Height = geneMap.Height;
 sp.Title = "Active Genes";
 sp.ShowMarker(false);
 
-var bv = New.BarView(expTable);
+var bv = New.BarView(expTable.SelectRows(New.IntArray(0)));
 var dLeft = 24;
 bv.Show();
 bv.Top = pp.Top + pp.Height - 8;
@@ -26,4 +26,5 @@ bv.AutoScaling = true;
 sp.Tag = bv;
 vv.FindWindow("Cell Map").ShowMarker(true);
 
+pp.SelectionMode = 0;
 vv.EventManager.OnItemsSelected("!cs.ShowActiveGenes(vv.EventSource.Item, expTable, sp);", sp);

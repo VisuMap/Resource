@@ -106,4 +106,40 @@ var cs = New.CsObject(`
 		bv.Redraw();
 		snapshot.RedrawBodiesType();
 	}
+
+	public void ShowActiveCells(IList<string> selectedItems, INumberTable expTable, IMapSnapshot snapshot) {
+		if ( (selectedItems==null) || (selectedItems.Count==0) )
+			return;
+		INumberTable selected = expTable.SelectColumnsById(selectedItems);
+		if ( selected.Columns == 0 )
+			return;
+		var bList = snapshot.BodyList;
+		var bv = snapshot.Tag as IBarView;
+		var items = bv.ItemList;
+		for(int row=0; row<selected.Rows; row++) {
+			double sum = 0;
+			double[] R = (double[])selected.Matrix[row];
+			for(int col=0; col<selected.Columns; col++)
+				sum += R[col];
+			items[row].Value = sum/selected.Columns;
+		}
+
+		double minExpr = bv.LowerLimit;
+		double maxExpr = bv.UpperLimit;
+		double stepSize = (maxExpr - minExpr)/16;
+		if ( stepSize <= 0 )
+			return;
+		for(int row=0; row<bList.Count; row++)
+			bList[row].Type = (short) ( (items[row].Value - minExpr)/stepSize);
+
+		bv.Redraw();
+		snapshot.RedrawBodiesType();
+	}
+
+	public void SetRange(INumberTable expTable, IBarView bv) {
+		double maxV = expTable.MaximumValue();
+		double minV = expTable.MinimumValue();
+		bv.UpperLimit = 20.0;
+		bv.LowerLimit = 0;
+	}
 `);

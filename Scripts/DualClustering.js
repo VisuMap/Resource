@@ -20,7 +20,7 @@ function DCMain() {
 	var nt2 = nt.Transpose2();
 	cs.ShiftTable(nt2, 1.0);
 	mds.SetTrainingData(nt2);
-	const [colClusters, colMap] = RunMdsCluster(mds, mtr.cos, 10, 250, 4.0, 0.1);
+	const [colClusters, colMap] = RunMdsCluster(mds, mtr.cos, 10, 100, 4.0, 0.1);
 	nt2.FreeRef();
 
        if ( typeof(ColumnSortingKeys) != 'undefined' )
@@ -38,7 +38,7 @@ function DCMain() {
 	var sz = 450;
 	var winWidth = sz;
 	var winHeight = sz;
-	pp.TheForm.SetBounds(600, 500, winWidth, winHeight);
+	pp.TheForm.SetBounds(1000, 700, winWidth, winHeight);
 	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 15, pp.TheForm.Top, sz, sz);
 	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 8, sz, sz);
 	rowMap.Title = "Cell Map";

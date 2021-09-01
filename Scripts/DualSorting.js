@@ -6,23 +6,22 @@ Description: Context menu script to perform dual sorting on a heatmap.
 
 To install Single-Cell-Atlas related menus mark and run the following statements:
 
-function AddMenu(label, script, formName) { 
-	vv.GuiManager.SetCustomMenu("Atlas/" + label, true, vv.CurrentScriptDirectory + "/" + script, formName);
-}
-AddMenu("Import Loom", "LoomRead.pyn", "MainForm");
-AddMenu("Import H5AD", "H5adRead.pyn", "MainForm");
-AddMenu("Import H5", "H5Read.pyn", "MainForm");
-AddMenu("Import Matrix", "MatrixRead.pyn", "MainForm");
-AddMenu("Dual Sorting", "DualSorting.js", "HeatMap");
-AddMenu("Dual Clustering", "DualClustering.js", "HeatMap");
-AddMenu("Active Genes", "ShowActiveGenes.js", "HeatMap");
+for(var [label, script, view] of [ 
+	["Import Loom", "LoomRead.pyn", "MainForm"],
+	["Import H5AD", "H5adRead.pyn", "MainForm"],
+	["Import H5", "H5Read.pyn", "MainForm"],
+	["Import Matrix", "MatrixRead.pyn", "MainForm"],
+	["Dual Sorting", "DualSorting.js", "HeatMap"],
+	["Dual Clustering", "DualClustering.js", "HeatMap"],
+	["Active Genes", "ShowActiveGenes.js", "HeatMap"]
+])
+	vv.GuiManager.SetCustomMenu("Atlas/" + label, true, vv.CurrentScriptDirectory + "/" + script, view);
 
 To remove the menus:
 
 vv.GuiManager.RemoveCustomMenu("Atlas/");
 */
 
-vv.GuiManager.Se
 
 var doClustering = vv.ModifierKeys.ControlPressed;
 
