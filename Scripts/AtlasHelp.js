@@ -100,7 +100,7 @@ var cs = New.CsObject(`
 		if ( stepSize <= 0 )
 			return;
 		for(int i=0; i<bList.Count; i++) {
-			bList[i].Type = (short) ( 2.0*(colMean[i] - minExpr)/stepSize);
+			bList[i].Type = (short) ( (colMean[i] - minExpr)/stepSize );
 			bv.ItemList[i].Value = colMean[i];
 		}
 		bv.Redraw();
