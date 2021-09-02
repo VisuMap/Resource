@@ -42,6 +42,20 @@ function RunMdsCluster(mds, mtr, minPoints, minSize, initExa, ppRatio) {
 	return [mds.ClustersFound, mpView];
 };
 
+function NewExpressionMap(parent, winTitle) {
+	vv.SelectedItems = null;
+	var exMap = parent.NewSnapshot();
+	exMap.GlyphSet="Ordered 64";
+	exMap.GlyphOpacity = 0.75;
+	exMap.GlyphSize = 1.0;
+	exMap.Width = parent.Width;
+	exMap.Height = parent.Height;
+	exMap.Title = winTitle;
+	exMap.ShowMarker(false);
+	return exMap;
+}
+
+
 var cs = New.CsObject(`
 	public void ShiftTable(INumberTable nt, double shiftFactor) {
 		double[] cm = nt.ColumnMean().Select(it=>it.Value * shiftFactor).ToArray();
@@ -96,7 +110,7 @@ var cs = New.CsObject(`
 		var bv = snapshot.Tag as IBarView;
 		double minExpr = colMean.Min();
 		double maxExpr = colMean.Max();
-		double stepSize = (maxExpr - minExpr)/16;
+		double stepSize = (maxExpr - minExpr)/64;
 		if ( stepSize <= 0 )
 			return;
 		for(int i=0; i<bList.Count; i++) {
@@ -116,17 +130,26 @@ var cs = New.CsObject(`
 		var bList = snapshot.BodyList;
 		var bv = snapshot.Tag as IBarView;
 		var items = bv.ItemList;
+		double overflow = 0;
+		int overCount = 0;
 		for(int row=0; row<selected.Rows; row++) {
-			double sum = 0;
+			double rowMean = 0;
 			double[] R = (double[])selected.Matrix[row];
 			for(int col=0; col<selected.Columns; col++)
-				sum += R[col];
-			items[row].Value = sum/selected.Columns;
+				rowMean += R[col];
+			rowMean /= selected.Columns;
+			items[row].Value = rowMean;
+			if ( rowMean > bv.UpperLimit ) {
+				overflow += rowMean;
+				overCount++;
+			}
 		}
+		if ( overCount > (int)(0.02 * selected.Rows) )
+			bv.UpperLimit = overflow/overCount;
 
 		double minExpr = bv.LowerLimit;
 		double maxExpr = bv.UpperLimit;
-		double stepSize = (maxExpr - minExpr)/16;
+		double stepSize = (maxExpr - minExpr)/64;
 		if ( stepSize <= 0 )
 			return;
 		for(int row=0; row<bList.Count; row++)
