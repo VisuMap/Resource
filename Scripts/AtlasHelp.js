@@ -3,6 +3,22 @@
 // Help functions.
 //
 
+var mtrList = { 
+	cos:'Correlation.Cosine Distance', 
+	euc:'EuclideanMetric', 
+	cor:'Correlation.Standard Correlation',
+};
+
+var cfg = {
+	cEpochs:5000, 
+	gEpochs:5000,     // training epochs for cell and gene profiles.
+	cPpr:0.05, 
+	gPpr:0.05,   	    // perplexity ratio
+	cMtr:mtrList.cos, 
+	gMtr:mtrList.cos, // metric 
+	gPrShift:1.0,     // gene profile shift
+};
+
 function SortTable(T, mt, epochs, ex, pr) {
 	var tsne = New.TsneSorter(T, mt);
 	tsne.MaxLoops = epochs;
@@ -21,7 +37,7 @@ function SortTable(T, mt, epochs, ex, pr) {
 	tsne.Close();
 };
 
-function RunMdsCluster(mds, mtr, minPoints, minSize, initExa, ppRatio) {
+function RunMdsCluster(mds, epochs, mtr, minPoints, minSize, initExa, ppRatio) {
 	mds.Is3D = false;
 	mds.Metric = mtr;
 	mds.ClusterAlgorithm = 4;  // for HDBSCAN algorithm
@@ -34,7 +50,7 @@ function RunMdsCluster(mds, mtr, minPoints, minSize, initExa, ppRatio) {
 	frm.HdbMinClusterSize = minSize;
 	frm.TsneExaFactor = initExa;
 	frm.TsneExaSmoothen = true;
-	frm.TsneMaxLoops = 5000;
+	frm.TsneMaxLoops = epochs;
 	frm.DbsClusterNoise = true;
 	mds.Reset().Start().ClusterData();
 	var mpView = mds.Is3D ? mds.Show3DView() : mds.Show2DView();

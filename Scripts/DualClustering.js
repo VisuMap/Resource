@@ -8,9 +8,8 @@ function DCMain() {
 	var nt = pp.GetNumberTable();
 	var mds = New.MdsCluster(nt);
 	mds.Show();
-	var mtr = {'cos':'Correlation.Cosine Distance', 'euc':'EuclideanMetric', 'cor':'Correlation.Standard Correlation'};
 		
-	const [rowClusters, rowMap] = RunMdsCluster(mds, mtr.cos, 3, 50, 6.0, 0.1);
+	const [rowClusters, rowMap] = RunMdsCluster(mds, cfg.cEpochs, cfg.cMtr, 3, 50, 6.0, cfg.cPpr);
 
        if ( typeof(RowSortingKeys) != 'undefined' )
 		cs.NormalizeColoring(mds.BodyList, RowSortingKeys, rowClusters);
@@ -18,9 +17,9 @@ function DCMain() {
 	pp.Redraw();
 
 	var nt2 = nt.Transpose2();
-	cs.ShiftTable(nt2, 1.0);
+	cs.ShiftTable(nt2, cfg.gPrShift);
 	mds.SetTrainingData(nt2);
-	const [colClusters, colMap] = RunMdsCluster(mds, mtr.cos, 10, 100, 4.0, 0.1);
+	const [colClusters, colMap] = RunMdsCluster(mds, cfg.gEpochs, cfg.gMtr, 10, 100, 4.0, cfg.gPpr);
 	nt2.FreeRef();
 
        if ( typeof(ColumnSortingKeys) != 'undefined' )
@@ -58,8 +57,6 @@ hm.Redraw()`;
 		mp.AddContextMenu("Captur Coloring", CaptureColor,  pp, 
 			"C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png", 
 			"Push the cluster coloring to the heatmap");
-
-	colMap.AddContextMenu("Show Gene Activity", "C:\\Users\\James\\OneDrive\\Desktop\\ShowActiveGenes.js");
 }
 
 
