@@ -12,8 +12,8 @@ var mtrList = {
 var cfg = {
 	cEpochs:5000, 
 	gEpochs:5000,     // training epochs for cell and gene profiles.
-	cPpr:0.05, 
-	gPpr:0.05,   	    // perplexity ratio
+	cPpr:0.1, 
+	gPpr:0.1,   	    // perplexity ratio
 	cMtr:mtrList.cos, 
 	gMtr:mtrList.cos, // metric 
 	gPrShift:1.0,     // gene profile shift

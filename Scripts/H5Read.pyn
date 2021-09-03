@@ -71,4 +71,7 @@ for col, id in enumerate(colIdList):
 	nt.ColumnSpecList[col].Id = uf.LookupName(id.decode('utf-8'))
 
 hm = New.HeatMap(nt).Show()
+hm.ClickContextMenu('Utilities/Transpose Table')
 hm.CentralizeColorSpectrum()
+
+
