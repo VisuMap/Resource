@@ -17,6 +17,13 @@ var cfg = {
 	cMtr:mtrList.cos, 
 	gMtr:mtrList.cos, // metric 
 	gPrShift:1.0,     // gene profile shift
+	cInitExa:6.0,     // initial exaggreation for cell-embedding
+	gInitExa:4.0,
+	cMinSize:50, gMinSize:100,
+	cMinPoint:3, gMinPoint:10,
+
+	RowSortingKeys:null,
+	ColumnSortingKeys:null,
 };
 
 function SortTable(T, mt, epochs, ex, pr) {
@@ -31,31 +38,10 @@ function SortTable(T, mt, epochs, ex, pr) {
 		vv.Return(1);
 	}
 	if (pp.SelectionMode == 0)
-		RowSortingKeys = tsne.ItemList;
+		cfg.RowSortingKeys = tsne.ItemList;
 	else
-		ColumnSortingKeys = tsne.ItemList;
+		cfg.ColumnSortingKeys = tsne.ItemList;
 	tsne.Close();
-};
-
-function RunMdsCluster(mds, epochs, mtr, minPoints, minSize, initExa, ppRatio) {
-	mds.Is3D = false;
-	mds.Metric = mtr;
-	mds.ClusterAlgorithm = 4;  // for HDBSCAN algorithm
-	mds.AutoClustering = false;
-	mds.AutoNormalizing = false;
-	mds.RefreshFreq = 50;
-	mds.PerplexityRatio = ppRatio;
-	var frm= mds.TheForm;
-	frm.HdbMinPoints = minPoints;
-	frm.HdbMinClusterSize = minSize;
-	frm.TsneExaFactor = initExa;
-	frm.TsneExaSmoothen = true;
-	frm.TsneMaxLoops = epochs;
-	frm.DbsClusterNoise = true;
-	mds.Reset().Start().ClusterData();
-	var mpView = mds.Is3D ? mds.Show3DView() : mds.Show2DView();
-	mpView.NormalizeView();
-	return [mds.ClustersFound, mpView];
 };
 
 function NewExpressionMap(parent, winTitle) {
@@ -78,16 +64,6 @@ var cs = New.CsObject(`
 		for(int row=0; row<nt.Rows; row++)
 			for(int col=0; col<nt.Columns; col++)
 				nt.Matrix[row][col] -= cm[col];
-	}
-
-	public void CopyRowTypes(IList<IRowSpec> rsList, IList<IBody> bodyList) {
-		for(int i=0; i<rsList.Count; i++)
-			rsList[i].Type = bodyList[i].Type;
-	}
-
-	public void CopyColumnTypes(IList<IColumnSpec> csList, IList<IBody> bodyList) {
-		for(int i=0; i<csList.Count; i++)
-			csList[i].Group = bodyList[i].Type;
 	}
 
        // permut the cluster index, so that similar data have equal cluster indexes.
@@ -113,6 +89,18 @@ var cs = New.CsObject(`
               	idxMap[idxOrder[i]] = i;
 		foreach(IBody b in bList)
               	b.Type = (short)idxMap[b.Type];		
+	}
+
+	public void CopyType(IList<IBody> bList, object rcList) {
+		if ( rcList is IList<IRowSpec> ) {
+			var rsList = rcList as IList<IRowSpec>;
+			for(int i=0; i<bList.Count; i++)
+				rsList[i].Type = bList[i].Type;
+		} else {
+			var csList = rcList as IList<IColumnSpec>;
+			for(int i=0; i<bList.Count; i++)
+				csList[i].Type = bList[i].Type;
+		}
 	}
 
 	public void ShowActiveGenes(IList<string> selectedItems, INumberTable expTable, IMapSnapshot snapshot) {

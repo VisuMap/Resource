@@ -3,14 +3,13 @@
 // DualSorting.js
 // Context menu script to perform dual sorting on a heatmap.
 
-var doClustering = vv.ModifierKeys.ControlPressed;
+var doAllService = vv.ModifierKeys.ControlPressed;
 
 if (pp.Name != "HeatMap"){
   vv.Message('Please call this script from the context menu of a heatmap view.');
   vv.Return(0);
 }
 
-var RowSortingKeys, ColumnSortingKeys;
 
 function DSMain() {
 	pp.DisableReorder = false;
@@ -32,5 +31,9 @@ function DSMain() {
 
 DSMain();
 
-if (doClustering) 
-  pp.ClickContextMenu("Atlas/Dual Clustering");
+if ( doAllService ) {
+  var hm = pp;
+  hm.ClickContextMenu("Atlas/Dual Embedding");
+  hm.ClickContextMenu("Atlas/Dual Clustering");
+  hm.ClickContextMenu("Atlas/Active Genes");
+}

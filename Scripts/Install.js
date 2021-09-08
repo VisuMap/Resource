@@ -11,6 +11,7 @@ for(var [label, script, view] of [
 	["Import H5", "H5Read.pyn", "MainForm"],
 	["Import Matrix", "MatrixRead.pyn", "MainForm"],
 	["Dual Sorting", "DualSorting.js", "HeatMap"],
+	["Dual Embedding", "DualEmbedding.js", "HeatMap"],
 	["Dual Clustering", "DualClustering.js", "HeatMap"],
 	["Active Genes", "ShowActiveGenes.js", "HeatMap"],
 	["Active Cells", "ShowActiveCells.js", "HeatMap"],

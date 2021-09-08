@@ -4,60 +4,54 @@
 //Cluster the rows and columns of a number table of the parent data view.
 //
 
-function DCMain() {
-	var nt = pp.GetNumberTable();
-	var mds = New.MdsCluster(nt);
-	mds.Show();
-		
-	const [rowClusters, rowMap] = RunMdsCluster(mds, cfg.cEpochs, cfg.cMtr, 3, 50, 6.0, cfg.cPpr);
-
-       if ( typeof(RowSortingKeys) != 'undefined' )
-		cs.NormalizeColoring(mds.BodyList, RowSortingKeys, rowClusters);
-	cs.CopyRowTypes(nt.RowSpecList, mds.BodyList);
-	pp.Redraw();
-
-	var nt2 = nt.Transpose2();
-	cs.ShiftTable(nt2, cfg.gPrShift);
-	mds.SetTrainingData(nt2);
-	const [colClusters, colMap] = RunMdsCluster(mds, cfg.gEpochs, cfg.gMtr, 10, 100, 4.0, cfg.gPpr);
-	nt2.FreeRef();
-
-       if ( typeof(ColumnSortingKeys) != 'undefined' )
-		cs.NormalizeColoring(mds.BodyList, ColumnSortingKeys, colClusters);
-	cs.CopyColumnTypes(nt.ColumnSpecList, mds.BodyList);	
-	pp.Redraw();
-	pp.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
-
-	mds.Close();
-	/*
-	pp.ClickContextMenu("Utilities/Sort Columns on Type");
-	pp.ClickContextMenu("Utilities/Sort Rows on Type");
-	*/
-	
-	var sz = 450;
-	var winWidth = sz;
-	var winHeight = sz;
-	pp.TheForm.SetBounds(1000, 700, winWidth, winHeight);
-	rowMap.TheForm.SetBounds(pp.TheForm.Left - sz + 15, pp.TheForm.Top, sz, sz);
-	colMap.TheForm.SetBounds(pp.TheForm.Left, pp.TheForm.Top - sz + 8, sz, sz);
-	rowMap.Title = "Cell Map";
-	colMap.Title = "Gene Map";
-
-	// context menu to the row and column maps.
-	var CaptureColor = `@
-hm = vv.EventSource.Item
-nt = hm.GetNumberTable()
-spList = nt.RowSpecList if (pp.Tag == 0) else nt.ColumnSpecList
-for i, b in enumerate(pp.BodyList):
-	spList[i].Type = b.Type
-hm.Redraw()`;
-
-	[rowMap.Tag, colMap.Tag] = [0, 1];
-	for( var mp of [rowMap, colMap] ) 
-		mp.AddContextMenu("Captur Coloring", CaptureColor,  pp, 
-			"C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png", 
-			"Push the cluster coloring to the heatmap");
+function DoClustering(map, minSize, minPoint) {
+	map.ClusterAlgorithm = 1;
+	map.MinClusterSize = minSize;
+	map.MinClusterPoint = minPoint;
+	map.DoDataClustering();
+	return map.Clusters;
 }
 
+function DCMain() {
+	var hm = pp;
+	var nt = hm.GetNumberTable();
+	var cellMap = vv.FindWindow("Cell Map");
+	var geneMap = vv.FindWindow("Gene Map");
+	
+	if ( (cellMap==null) || (geneMap==null) ) {
+		vv.Message("Cell/Gene map not present!\nPlease run DualClustering!");
+		vv.Return();
+	}
+
+	// Setup context menu to synchronize clusters with the heatmap.
+	var CaptureColor = `!{
+		let hm = vv.EventSource.Item;
+		let nt = hm.GetNumberTable();
+		cs.CopyType(pp.BodyList, (pp.Tag == 77) ? nt.RowSpecList : nt.ColumnSpecList);
+		hm.Redraw();
+	}`;
+	[cellMap.Tag, geneMap.Tag] = [77, 88];
+	for( var mp of [cellMap, geneMap] ) 
+		mp.AddContextMenu("Capture Coloring", CaptureColor,  hm, 
+			"C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png", 
+			"Push the cluster coloring to the heatmap");
+
+	var rowClusters = DoClustering(cellMap, cfg.cMinSize, cfg.cMinPoint);
+       if ( cfg.RowSortingKeys != null )
+		cs.NormalizeColoring(cellMap.BodyList, cfg.RowSortingKeys, rowClusters);
+	cellMap.ClickContextMenu("Capture Coloring");
+
+	var colClusters = DoClustering(geneMap, cfg.gMinSize, cfg.gMinSize);
+       if ( cfg.ColumnSortingKeys != null )
+		cs.NormalizeColoring(geneMap.BodyList, cfg.ColumnSortingKeys, colClusters);
+	geneMap.ClickContextMenu("Capture Coloring");
+
+	hm.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
+
+	/*
+	hm.ClickContextMenu("Utilities/Sort Columns on Type");
+	hm.ClickContextMenu("Utilities/Sort Rows on Type");
+	*/	
+}
 
 DCMain();
