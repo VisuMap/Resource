@@ -38,7 +38,9 @@ function ShowActiveCells() {
 	sp.Tag = bv;
 	sp.ShowMarker(false);
 	pp.SelectionMode = 1;
-	vv.EventManager.OnItemsSelected("!cs.ShowActiveCells(vv.EventSource.Item, expTable, sp);", sp);	
+	vv.EventManager.OnItemsSelected(
+		"!cs.ShowActiveCells(vv.EventSource.Item, cfg.hm.GetNumberTable(), vv.EventSource.Argument);",
+		sp, sp);
 }
 
 ShowActiveCells();

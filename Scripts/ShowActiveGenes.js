@@ -36,7 +36,9 @@ function ShowActiveGenes() {
 	bv.Redraw();
 	
 	pp.SelectionMode = 0;
-	vv.EventManager.OnItemsSelected("!cs.ShowActiveGenes(vv.EventSource.Item, expTable, sp);", sp);
+	vv.EventManager.OnItemsSelected(
+		"!cs.ShowActiveGenes(vv.EventSource.Item, cfg.hm.GetNumberTable(), vv.EventSource.Argument);",
+		sp, sp);
 }
 
 ShowActiveGenes();
