@@ -5,6 +5,13 @@
 //
 
 function DoClustering(map, minSize, minPoint) {
+	// Setup context menu to synchronize clusters with the heatmap.
+	var menuScript = `!cs.CopyType(pp.BodyList, pp.Tag);cfg.hm.Redraw();`;
+	var imgPath = "C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png";
+	var menuTip = "Push the cluster coloring to the heatmap";
+	var menuLabel = "Capture Coloring";
+	map.AddContextMenu(menuLabel, menuScript, null, imgPath, menuTip);
+
 	map.ClusterAlgorithm = 1;
 	map.MinClusterSize = minSize;
 	map.MinClusterPoint = minPoint;
@@ -13,8 +20,8 @@ function DoClustering(map, minSize, minPoint) {
 }
 
 function DCMain() {
-	var hm = pp;
-	var nt = hm.GetNumberTable();
+	cfg.hm = pp;
+	var nt = cfg.hm.GetNumberTable();
 	var cellMap = vv.FindWindow("Cell Map");
 	var geneMap = vv.FindWindow("Gene Map");
 	
@@ -23,34 +30,22 @@ function DCMain() {
 		vv.Return();
 	}
 
-	// Setup context menu to synchronize clusters with the heatmap.
-	var CaptureColor = `!{
-		let hm = vv.EventSource.Item;
-		let nt = hm.GetNumberTable();
-		cs.CopyType(pp.BodyList, (pp.Tag == 77) ? nt.RowSpecList : nt.ColumnSpecList);
-		hm.Redraw();
-	}`;
-	[cellMap.Tag, geneMap.Tag] = [77, 88];
-	for( var mp of [cellMap, geneMap] ) 
-		mp.AddContextMenu("Capture Coloring", CaptureColor,  hm, 
-			"C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png", 
-			"Push the cluster coloring to the heatmap");
+	cellMap.Tag = nt.RowSpecList;
+	geneMap.Tag = nt.ColumnSpecList;
 
 	var rowClusters = DoClustering(cellMap, cfg.cMinSize, cfg.cMinPoint);
-       if ( cfg.RowSortingKeys != null )
-		cs.NormalizeColoring(cellMap.BodyList, cfg.RowSortingKeys, rowClusters);
+	cs.NormalizeColoring(cellMap.BodyList, cfg.RowSortingKeys, rowClusters);
 	cellMap.ClickContextMenu("Capture Coloring");
 
 	var colClusters = DoClustering(geneMap, cfg.gMinSize, cfg.gMinSize);
-       if ( cfg.ColumnSortingKeys != null )
-		cs.NormalizeColoring(geneMap.BodyList, cfg.ColumnSortingKeys, colClusters);
+	cs.NormalizeColoring(geneMap.BodyList, cfg.ColumnSortingKeys, colClusters);
 	geneMap.ClickContextMenu("Capture Coloring");
 
-	hm.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
+	cfg.hm.Title = "Row/Column Clusters: " + rowClusters + "/" + colClusters;
 
 	/*
-	hm.ClickContextMenu("Utilities/Sort Columns on Type");
-	hm.ClickContextMenu("Utilities/Sort Rows on Type");
+	cfg.hm.ClickContextMenu("Utilities/Sort Columns on Type");
+	cfg.hm.ClickContextMenu("Utilities/Sort Rows on Type");
 	*/	
 }
 

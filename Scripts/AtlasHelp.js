@@ -12,18 +12,21 @@ var mtrList = {
 var cfg = {
 	cEpochs:5000, 
 	gEpochs:5000,     // training epochs for cell and gene profiles.
-	cPpr:0.1, 
-	gPpr:0.1,   	    // perplexity ratio
-	cMtr:mtrList.cos, 
-	gMtr:mtrList.cos, // metric 
-	gPrShift:1.0,     // gene profile shift
+	cPpr:0.1, 	    // perplexity ratio
+	gPpr:0.1,   	    
+	cMtr:mtrList.cos, // metric
+	gMtr:mtrList.cos,  
+	gPrShift:0.5,     // gene profile shift
 	cInitExa:6.0,     // initial exaggreation for cell-embedding
 	gInitExa:4.0,
-	cMinSize:50, gMinSize:100,
-	cMinPoint:3, gMinPoint:10,
+	cMinPoint:3,
+	cMinSize:50, 
+	gMinPoint:10,
+	gMinSize:100,
 
 	RowSortingKeys:null,
 	ColumnSortingKeys:null,
+	hm:null,
 };
 
 function SortTable(T, mt, epochs, ex, pr) {
@@ -68,6 +71,8 @@ var cs = New.CsObject(`
 
        // permut the cluster index, so that similar data have equal cluster indexes.
 	public void NormalizeColoring(IList<IBody> bList, IList<IValueItem> keys, int cN) {
+		if ( keys == null )
+			return;
 		if ( keys.Count != bList.Count ) {
 			vv.Message("Invalid sorting keys!");
 			return;
