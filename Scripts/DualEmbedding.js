@@ -1,8 +1,10 @@
 //!import "AtlasHelp.js"
-//DualEmbedding.js
 //
-//Cluster the rows and columns of a number table of the parent data view.
+// DualEmbedding.js
+// Create t-SNE embedding for rows and columns of heatmap.
 //
+
+ValidateHeatMap(pp);
 
 function RunEmbedding(mds, epochs, mtr, initExa, ppRatio) {
 	mds.Is3D = false;

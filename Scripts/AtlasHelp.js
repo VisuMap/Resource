@@ -29,6 +29,13 @@ var cfg = {
 	hm:null,
 };
 
+function ValidateHeatMap(parent) {
+	if (parent.Name != "HeatMap"){
+		vv.Message('Please call this script from the context menu of a heatmap view.');
+		vv.Return(0);
+	}
+}
+
 function SortTable(T, mt, epochs, ex, pr) {
 	var tsne = New.TsneSorter(T, mt);
 	tsne.MaxLoops = epochs;
@@ -96,16 +103,16 @@ var cs = New.CsObject(`
               	b.Type = (short)idxMap[b.Type];		
 	}
 
-	public void CopyType(IList<IBody> bList, object rcList) {
-		if ( rcList is IList<IRowSpec> ) {
-			var rsList = rcList as IList<IRowSpec>;
+	public void CopyType(IMapSnapshot map, IHeatMap hm) {
+		INumberTable nt = hm.GetNumberTable();
+		IList<IBody> bList = map.BodyList;
+		if ( map.Title == "Cell Map" )
 			for(int i=0; i<bList.Count; i++)
-				rsList[i].Type = bList[i].Type;
-		} else {
-			var csList = rcList as IList<IColumnSpec>;
+				nt.RowSpecList[i].Type = bList[i].Type;
+		else if (map.Title == "Gene Map")
 			for(int i=0; i<bList.Count; i++)
-				csList[i].Type = bList[i].Type;
-		}
+				nt.ColumnSpecList[i].Type = bList[i].Type;
+		hm.Redraw();
 	}
 
 	public void ShowActiveGenes(IList<string> selectedItems, INumberTable expTable, IMapSnapshot snapshot) {

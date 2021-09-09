@@ -1,12 +1,14 @@
 //!import "AtlasHelp.js"
-//DualClustering.js
 //
-//Cluster the rows and columns of a number table of the parent data view.
+// DualClustering.js
+// Cluster the rows and columns of a number table of the parent data view.
 //
+
+ValidateHeatMap(pp);
 
 function DoClustering(map, minSize, minPoint) {
 	// Setup context menu to synchronize clusters with the heatmap.
-	var menuScript = `!cs.CopyType(pp.BodyList, pp.Tag);cfg.hm.Redraw();`;
+	var menuScript = "!cs.CopyType(pp, cfg.hm);";
 	var imgPath = "C:\\Program Files\\VisuMap Technologies\\VisuMap5\\resource\\icon\\PartitionA.png";
 	var menuTip = "Push the cluster coloring to the heatmap";
 	var menuLabel = "Capture Coloring";
@@ -29,9 +31,6 @@ function DCMain() {
 		vv.Message("Cell/Gene map not present!\nPlease run DualClustering!");
 		vv.Return();
 	}
-
-	cellMap.Tag = nt.RowSpecList;
-	geneMap.Tag = nt.ColumnSpecList;
 
 	var rowClusters = DoClustering(cellMap, cfg.cMinSize, cfg.cMinPoint);
 	cs.NormalizeColoring(cellMap.BodyList, cfg.RowSortingKeys, rowClusters);

@@ -5,13 +5,10 @@
 
 var doAllService = vv.ModifierKeys.ControlPressed;
 
-if (pp.Name != "HeatMap"){
-  vv.Message('Please call this script from the context menu of a heatmap view.');
-  vv.Return(0);
-}
-
+ValidateHeatMap(pp);
 
 function DSMain() {
+	cfg.hm = pp;
 	pp.DisableReorder = false;
 	var dsTable = pp.GetNumberTable();
 	
@@ -32,8 +29,7 @@ function DSMain() {
 DSMain();
 
 if ( doAllService ) {
-  var hm = pp;
-  hm.ClickContextMenu("Atlas/Dual Embedding");
-  hm.ClickContextMenu("Atlas/Dual Clustering");
-  hm.ClickContextMenu("Atlas/Active Genes");
+  cfg.hm.ClickContextMenu("Atlas/Dual Embedding");
+  cfg.hm.ClickContextMenu("Atlas/Dual Clustering");
+  cfg.hm.ClickContextMenu("Atlas/Active Genes");
 }
