@@ -1,0 +1,81 @@
+#ImportWig.pyn
+
+
+cs = New.CsObject("""
+	public float[][] ReadWig(string fileName) {
+		List<float>[] seqList = new List<float>[23];
+		List<float> curSeq = null;
+		Stream st = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+		if ( fileName.EndsWith(".wig.gz") )
+			st = new System.IO.Compression.GZipStream(st, 
+				System.IO.Compression.CompressionMode.Decompress);
+		using(TextReader tr = new StreamReader(st)) {
+			while(true) {
+				string line = tr.ReadLine();
+				if ( line == null ) 
+					break;
+				if ( line[0] == 'f' ) {
+					int seqIdx = (line[19] == 'X') ? 22 
+						: (int.Parse(line.Substring(19, 2))-1);
+					seqList[seqIdx] = curSeq = new List<float>();
+				} else
+					curSeq.Add( float.Parse(line) );
+			}
+		}
+		st.Close();
+		return seqList.Select(seq=>seq.ToArray()).ToArray();
+	}
+""")
+
+chrIdx = 0;
+
+def PromptFile(fIndex=2):
+	import clr
+	clr.AddReference("System.Windows.Forms")
+	from System.Windows.Forms import OpenFileDialog
+	fd = OpenFileDialog()
+	fd.Filter = "WigFiles|*.wig|WigFilesGZ|*.wig.gz|NumpyTrack|*.npy"
+	fd.FilterIndex = fIndex
+	fd.RestoreDirectory = True
+	fd.ShowDialog()
+	return fd.FileName
+
+def LoadFile():
+	fn = PromptFile()
+	if fn is not None:
+		return cs.ReadWig(fn)
+	else:
+		return None
+
+def ShowFile():
+	seq = LoadFile()
+	if seq != None:
+		New.BigBarView(seq[chrIdx]).Show()
+
+def ShowNumpyBigWig(fileName):
+	import numpy as np
+	seq = np.load(fileName)
+	seq = seq.reshape([1,-1])
+	mtx = mm.ToMatrix32(seq)
+	New.BigBarView(mtx[0]).Show()
+
+# The following code only runs on Linux under VirtualBox
+def ExtractTrack(fileName, chrName):
+        import pyBigWig as pw
+        import numpy as np
+        f = pw.open(fileName, "r")
+        chrLen = f.chroms(chrName)
+        seq = f.values(chrName, 0, chrLen, numpy=True)
+        seq = np.nan_to_num(seq)
+        seq = np.reshape(seq, [1, -1])
+        np.save('Track_' + chrName + '.npy', seq)
+        f.close()
+
+#ExtractTrack('GSM2224588_KI_COLO205_DNaseI_rmdup_normalized.bw', 'chr4')
+
+def ShowNumpyTrack():
+	fn = PromptFile(3)
+	if fn is not None:
+		ShowNumpyBigWig(fn)
+
+ShowNumpyTrack()
