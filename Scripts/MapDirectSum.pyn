@@ -1,0 +1,33 @@
+# interpolating between two maps with direct-sum
+#
+import numpy as np
+
+def MergeMaps(map1, map2):
+	bs1 = vv.Dataset.ReadMapBodyList(map1)
+	bs2 = vv.Dataset.ReadMapBodyList(map2)
+	nt = New.NumberTable(bs1, 4)
+	dt = mm.ToNumpy(nt)
+	for k, b in enumerate(bs2):
+		dt[k, 2:4] = b.X, b.Y
+	return dt, nt
+dt, nt = MergeMaps('E2', 'E7')
+mapInit = New.MapSnapshot(None, 'E2').Show()
+
+mds = New.MdsCluster(nt)
+mds.PerplexityRatio = 0.15
+mds.ExaggerationFactor = 10
+mds.ExaggerationFinal = 0.8
+mds.Metric = 'EuclidianMetric'
+mds.MaxLoops = 2500
+mds.Show()
+
+for f in np.linspace(0.6, 0.0, 13):
+	g = 1 - f
+	mm.CopyToTable([f,f,g,g]*dt, nt)
+	mds.SetTrainingData(nt).Reset().Start()
+	if mds.LoopsTsne != mds.MaxLoops: vv.Return()
+	mds.Show2DView().Title = 'Weights: %g, %g'%(f, g)
+
+mds.Close()
+mapInit.ClickContextMenu('Atlas/Compare Maps')
+
