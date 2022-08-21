@@ -52,12 +52,6 @@ def ShowFile():
 	if seq != None:
 		New.BigBarView(seq[chrIdx]).Show()
 
-def ShowNumpyBigWig(fileName):
-	import numpy as np
-	seq = np.load(fileName)
-	seq = seq.reshape([1,-1])
-	mtx = mm.ToMatrix32(seq)
-	New.BigBarView(mtx[0]).Show()
 
 # The following code only runs on Linux under VirtualBox
 def ExtractTrack(fileName, chrName):
@@ -70,12 +64,19 @@ def ExtractTrack(fileName, chrName):
         seq = np.reshape(seq, [1, -1])
         np.save('Track_' + chrName + '.npy', seq)
         f.close()
-
 #ExtractTrack('GSM2224588_KI_COLO205_DNaseI_rmdup_normalized.bw', 'chr4')
+
+def ShowNumpyBigWig(fileName):
+	import numpy as np
+	seq = np.load(fileName)
+	seq = seq.reshape([1,-1])
+	mtx = mm.ToMatrix32(seq)
+	New.BigBarView(mtx[0]).Show()
 
 def ShowNumpyTrack():
 	fn = PromptFile(3)
 	if fn is not None:
 		ShowNumpyBigWig(fn)
 
-ShowNumpyTrack()
+# ShowNumpyTrack()
+ShowFile()
