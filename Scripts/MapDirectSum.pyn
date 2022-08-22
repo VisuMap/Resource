@@ -10,18 +10,19 @@ def MergeMaps(map1, map2):
 	for k, b in enumerate(bs2):
 		dt[k, 2:4] = b.X, b.Y
 	return dt, nt
-dt, nt = MergeMaps('E2', 'E7')
-mapInit = New.MapSnapshot(None, 'E2').Show()
+dt, nt = MergeMaps('EUC', 'EUC1')
+mapInit = New.MapSnapshot(None, 'EUC').Show()
 
 mds = New.MdsCluster(nt)
 mds.PerplexityRatio = 0.15
-mds.ExaggerationFactor = 10
+mds.ExaggerationFactor = 12
 mds.ExaggerationFinal = 0.8
 mds.Metric = 'EuclidianMetric'
+#mds.Metric = 'Correlation.Cosine Distance'
 mds.MaxLoops = 2500
 mds.Show()
 
-for f in np.linspace(0.6, 0.0, 13):
+for f in np.arange(1.0, -0.001, -0.05):
 	g = 1 - f
 	mm.CopyToTable([f,f,g,g]*dt, nt)
 	mds.SetTrainingData(nt).Reset().Start()

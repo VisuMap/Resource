@@ -1,0 +1,43 @@
+# probe feature set by descreasing scaling.
+#
+import numpy as np
+
+def GetSettings():
+	fSet = set(vv.SelectedItems)
+	nt = vv.GetNumberTableFiltered()
+	csList = nt.ColumnSpecList
+	fIdx = [k for k in range(nt.Columns) if csList[k].Id in fSet]
+	if len(fIdx) == 0:
+		vv.Message('Please select some features/columns from current dataset')
+		vv.Return()
+	dt = mm.ToNumpy(nt)
+	map0 = New.MapSnapshot().Show()
+	map0.Title = 'Probing %d features...'%(len(fIdx))
+	return nt, dt, fIdx, map0
+
+nt, dt, fIdx, map0 = GetSettings()
+
+mds = New.MdsCluster(nt)
+mds.PerplexityRatio = 0.15
+mds.ExaggerationFactor = 12
+mds.ExaggerationFinal = 0.8
+mds.ExaggerationSmoothen = True
+mds.StagedTraining = True
+mds.Metric = vv.Map.Metric
+mds.MaxLoops = 5000
+mds.Show()
+
+N = 10
+f = 1.0
+for n in range(N):
+	mm.CopyToTable(dt, nt)
+	mds.SetTrainingData(nt).Reset().Start()
+	if mds.LoopsTsne != mds.MaxLoops: 
+		vv.Return()
+	mds.Show2DView().Title = '%d: Weights: %g'%(n, f)
+	s = 0 if n == N-2 else 0.5
+	dt[:,fIdx] *= s
+	f *= s
+
+mds.Close()
+map0.ClickContextMenu('Atlas/Compare Maps')
