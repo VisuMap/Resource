@@ -10,24 +10,37 @@ def MergeMaps(map1, map2):
 	for k, b in enumerate(bs2):
 		dt[k, 2:4] = b.X, b.Y
 	return dt, nt
+
+def NewMds(nt, epochs=2500, perplexity=0.15, exaInit=12, exaFinal=0.8):
+	mds = New.MdsCluster(nt)
+	mds.MaxLoops = epochs
+	mds.PerplexityRatio = perplexity
+	mds.ExaggerationFactor = exaInit
+	mds.ExaggerationFinal = exaFinal
+	mds.ExaggerationSmoothen = True
+	mds.StagedTraining = True
+	mds.Metric = vv.Map.Metric
+	mds.AutoNormalizing = True
+	mds.AutoClustering = False
+	mds.Is3D = False
+	mds.RefreshFreq = 50
+	mds.Show()
+	return mds
+
+
 dt, nt = MergeMaps('EUC', 'EUC1')
 mapInit = New.MapSnapshot(None, 'EUC').Show()
-
-mds = New.MdsCluster(nt)
-mds.PerplexityRatio = 0.15
-mds.ExaggerationFactor = 12
-mds.ExaggerationFinal = 0.8
-mds.Metric = 'EuclidianMetric'
-#mds.Metric = 'Correlation.Cosine Distance'
-mds.MaxLoops = 2500
-mds.Show()
+mds = NewMds(nt, 1000)
 
 for f in np.arange(1.0, -0.001, -0.05):
 	g = 1 - f
 	mm.CopyToTable([f,f,g,g]*dt, nt)
 	mds.SetTrainingData(nt).Reset().Start()
 	if mds.LoopsTsne != mds.MaxLoops: vv.Return()
-	mds.Show2DView().Title = 'Weights: %g, %g'%(f, g)
+	mp = mds.Show2DView()
+	mp.Title = 'Weights: %g, %g'%(f, g)
+	mp.TheForm
+	mp.TheForm.SetBounds(0, 0, 600, 500, 12)
 
 mds.Close()
 mapInit.ClickContextMenu('Atlas/Compare Maps')
