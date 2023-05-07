@@ -12,12 +12,11 @@ public void SetMap(List<IBody> bList, double zOffset,
 }
 ''')
 
-def Make3DMap(cpRd, stepSize=5.0):
+def Make3DMap(cpRd, stepSize, xyZoom):
 	bodyList = New.BodyList()
 	zOffset = 0
 	cx = vv.Map.Width/2.0
 	cy = vv.Map.Height/2.0
-	xyZoom = 2.0
 	for i in range(cpRd.FrameList.Count):
 		#if (i < 0.8*cpRd.FrameList.Count) and (i%5 != 0): continue
 		bList = cpRd.FrameList[i].GetBodyList()
@@ -39,12 +38,12 @@ def Make3DMap(cpRd, stepSize=5.0):
 cpRd = vv.FindPluginObject('ClipRecorder').OpenRecorder().StartRecording()
 
 tsne = New.TsneMap()
-tsne.InitialExaggeration = 8
-tsne.FinalExaggeration = 0.75
-tsne.PerplexityRatio = 0.05
-tsne.MaxLoops = 5000
-tsne.GlyphScale = 5.0
-tsne.RefreshFreq = 10
+tsne.InitialExaggeration = 4
+tsne.FinalExaggeration = 1.5
+tsne.PerplexityRatio = 0.1
+tsne.MaxLoops = 2000
+tsne.GlyphScale = 10.0
+tsne.RefreshFreq = 5
 tsne.ExaggerationSmoothen = True
 tsne.StagedTraining = False
 tsne.AutoNormalizing = False
@@ -52,9 +51,12 @@ tsne.AutoScaling = False
 tsne.MomentSwitch = 0.99
 tsne.Repeats = 1
 tsne.Is3D = False
+tsne.HistStepSize = 1.5
 tsne.ReadOnly = True
 
 tsne.Show().Start().Close()
 
 cpRd.StopRecording()
-m3d = Make3DMap(cpRd, 1.25)
+
+# cpRd = vv.FindPluginObject('ClipRecorder').OpenRecorder()
+m3d = Make3DMap(cpRd, 1.0, 20.0)

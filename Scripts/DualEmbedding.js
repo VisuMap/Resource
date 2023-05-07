@@ -14,6 +14,7 @@ function RunEmbedding(mds, epochs, mtr, initExa, ppRatio) {
 	mds.AutoNormalizing = false;
 	mds.RefreshFreq = 50;
 	mds.PerplexityRatio = ppRatio;
+	mds.Repeats = 1;
 	mds.Reset().Start();
 	var mpView = mds.Is3D ? mds.Show3DView() : mds.Show2DView();
 	mpView.NormalizeView();
@@ -24,7 +25,7 @@ function DEmbeddingMain() {
 	var nt = pp.GetNumberTable();
 	var mds = New.MdsCluster(nt);
 	mds.Show();
-		
+
 	var rowMap = RunEmbedding(mds, cfg.cEpochs, cfg.cMtr, cfg.cInitExa, cfg.cPpr);
 
 	var nt2 = nt.Transpose2();
