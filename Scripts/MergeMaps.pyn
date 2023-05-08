@@ -4,12 +4,13 @@
 # then merging them into a single tSNE maps.
 #
 markerList = [700, 800, 900, 1000]
-markerList = [k*5 for k in markerList]
+markerList = [k*1 for k in markerList]
 mapIs3D = False
 showMaps = False
 mapDim = 3 if mapIs3D else 2
 epochs = markerList[-1]
-ntMap = New.NumberTable(vv.Dataset.BodyListEnabled(), mapDim*len(markerList))
+bsList = vv.Dataset.BodyListEnabled()
+ntMap = New.NumberTable(bsList, mapDim*len(markerList))
 
 cs = New.CsObject('''
 	public void CaptureOneMap(INumberTable nt, List<IBody> bsList, int column0, bool mapIs3D) {
@@ -51,7 +52,7 @@ if mds.CurrentLoops != epochs:
 	vv.Return()
 mds.Close()
 
-md2 = New.MdsCluster(nt)
+md2 = New.MdsCluster(ntMap)
 md2.Metric = "EuclideanMetric"
 md2.MaxLoops = epochs
 md2.InitialExaggeration = 4.0
