@@ -3,17 +3,16 @@
 # Caputure tSNE maps at different exaggeration levels ( i.e. scale ) and
 # then merging them into a single tSNE maps.
 #
-markerList = [700, 800, 900, 1000]
-markerList = [k*1 for k in markerList]
-mapIs3D = False
-showMaps = False
-mapDim = 3 if mapIs3D else 2
+markerList = [500, 750, 1000]
+markerList = [k*2 for k in markerList]
+mapIs3D, showMaps = True, False
 epochs = markerList[-1]
 bsList = vv.Dataset.BodyListEnabled()
-ntMap = New.NumberTable(bsList, mapDim*len(markerList))
+dsTable = None
 
 cs = New.CsObject('''
-	public void CaptureOneMap(INumberTable nt, List<IBody> bsList, int column0, bool mapIs3D) {
+	public void CaptureOneMap(INumberTable nt, 
+			List<IBody> bsList, int column0, bool mapIs3D) {
 		double[][] M = nt.Matrix as double[][];
    	for(int k=0; k<bsList.Count; k++) {
 			IBody b = bsList[k];
@@ -29,44 +28,57 @@ cs = New.CsObject('''
 def BodyMoved():
 	if pp.CurrentLoops in markerList:
 		idx = markerList.index(pp.CurrentLoops)
-		markerList[idx] = -1
-		cs.CaptureOneMap(ntMap, bsList, idx*mapDim, mapIs3D);
+		mapDim = 3 if mapIs3D else 2
+		cs.CaptureOneMap(dsTable, bsList, idx*mapDim, mapIs3D);
 		if showMaps:
 			New.MapSnapshot().Show()
 
-mds = New.TsneMap()
-mds.MaxLoops = epochs
-mds.RefreshFreq = 50
-mds.Is3D = mapIs3D
-mds.InitialExaggeration = 3.0
-mds.FinalExaggeration = 1.1
-mds.AutoNormalizing = False
-mds.AutoScaling = True
-mds.TracingType = 6
-mds.PerplexityRatio = 0.02
+def CreateMapDataset():
+	global dsTable
+	mapDim = 3 if mapIs3D else 2
+	dsTable = New.NumberTable(bsList, mapDim*len(markerList))
+	mds = New.TsneMap()
+	mds.MaxLoops = epochs
+	mds.RefreshFreq = 50
+	mds.Is3D = mapIs3D
+	mds.InitialExaggeration = 3.0
+	mds.FinalExaggeration = 1.1
+	mds.AutoNormalizing = False
+	mds.AutoScaling = True
+	mds.TracingType = 6
+	mds.PerplexityRatio = 0.02
+	vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
+	mds.Show().Reset().Start()
+	
+	if mds.CurrentLoops != mds.MaxLoops:
+		mds.Close()
+		vv.Return()
+	else:
+		mds.Close()
 
-vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
-mds.Show().Reset().Start()
-if mds.CurrentLoops != epochs:
-	mds.Close()
-	vv.Return()
-mds.Close()
+def CreateMdsMap(nt):
+	md2 = New.MdsCluster(nt)
+	md2.Metric = "EuclideanMetric"
+	md2.MaxLoops = epochs
+	md2.InitialExaggeration = 4.0
+	md2.FinalExaggeration = 1.0
+	md2.PerplexityRatio = 0.05
+	md2.MdsAlgorithm = 2
+	md2.AutoNormalizing= True
+	md2.RefreshFreq = 50
+	md2.Is3D = mapIs3D
+	md2.Show().Reset().Start()
+	
+	if md2.LoopsTsne == md2.MaxLoops:
+		md2.CaptureMap()
+		md2.Close()
 
-md2 = New.MdsCluster(ntMap)
-md2.Metric = "EuclideanMetric"
-md2.MaxLoops = epochs
-md2.InitialExaggeration = 4.0
-md2.FinalExaggeration = 1.0
-md2.PerplexityRatio = 0.05
-md2.MdsAlgorithm = 2
-md2.AutoNormalizing= True
-md2.RefreshFreq = 50
-md2.Is3D = mapIs3D
-md2.Show().Reset().Start()
+#------------------------------------------
 
-md2.CaptureMap()
-md2.Close()
+CreateMapDataset()
+CreateMdsMap(dsTable)
 
+vv.Dataset.AddMap()
 
-
-
+CreateMapDataset()
+CreateMdsMap(dsTable)
