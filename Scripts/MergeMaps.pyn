@@ -3,12 +3,9 @@
 # Caputure tSNE maps at different exaggeration levels ( i.e. scale ) and
 # then merging them into a single tSNE maps.
 #
-markerList = [500, 750, 1000]
-markerList = [k*2 for k in markerList]
-mapIs3D, showMaps = True, False
-epochs = markerList[-1]
+markerList = [k*2 for k in [600, 700, 800, 900, 950, 1000]]
+mapIs3D, showMaps, epochs = False, False, markerList[-1]
 bsList = vv.Dataset.BodyListEnabled()
-dsTable = None
 
 cs = New.CsObject('''
 	public void CaptureOneMap(INumberTable nt, 
@@ -29,56 +26,56 @@ def BodyMoved():
 	if pp.CurrentLoops in markerList:
 		idx = markerList.index(pp.CurrentLoops)
 		mapDim = 3 if mapIs3D else 2
+		dsTable = pp.Tag
 		cs.CaptureOneMap(dsTable, bsList, idx*mapDim, mapIs3D);
 		if showMaps:
-			New.MapSnapshot().Show()
+			mp = New.MapSnapshot().Show()
+			mp.Title = "Epochs: " + str(pp.CurrentLoops)
 
-def CreateMapDataset():
-	global dsTable
-	mapDim = 3 if mapIs3D else 2
-	dsTable = New.NumberTable(bsList, mapDim*len(markerList))
-	mds = New.TsneMap()
+def RunTsne(mds):
 	mds.MaxLoops = epochs
 	mds.RefreshFreq = 50
 	mds.Is3D = mapIs3D
-	mds.InitialExaggeration = 3.0
-	mds.FinalExaggeration = 1.1
-	mds.AutoNormalizing = False
-	mds.AutoScaling = True
 	mds.TracingType = 6
-	mds.PerplexityRatio = 0.02
-	vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
 	mds.Show().Reset().Start()
-	
 	if mds.CurrentLoops != mds.MaxLoops:
-		mds.Close()
 		vv.Return()
 	else:
 		mds.Close()
 
+def CreateMapDataset():
+	vv.Map.Metric= "Correlation.Cosine Distance"
+	mds = New.TsneMap()
+	mds.InitialExaggeration = 10.0
+	mds.FinalExaggeration = 1.1
+	mds.PerplexityRatio = 0.02
+	mds.AutoNormalizing = False
+	mds.AutoScaling = True
+
+	mapDim = 3 if mapIs3D else 2
+	dsTable = New.NumberTable(bsList, mapDim*len(markerList))
+	mds.Tag = dsTable
+	vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
+	RunTsne(mds)
+	return dsTable
+
 def CreateMdsMap(nt):
-	md2 = New.MdsCluster(nt)
-	md2.Metric = "EuclideanMetric"
-	md2.MaxLoops = epochs
-	md2.InitialExaggeration = 4.0
-	md2.FinalExaggeration = 1.0
-	md2.PerplexityRatio = 0.05
-	md2.MdsAlgorithm = 2
-	md2.AutoNormalizing= True
-	md2.RefreshFreq = 50
-	md2.Is3D = mapIs3D
-	md2.Show().Reset().Start()
-	
-	if md2.LoopsTsne == md2.MaxLoops:
-		md2.CaptureMap()
-		md2.Close()
+	vv.Map.Metric= "EuclideanMetric"
+	mds = New.TsneMap()
+	mds.ChangeTrainingData(nt)
+	mds.InitialExaggeration = 10.0
+	mds.FinalExaggeration = 1.0
+	mds.PerplexityRatio = 0.05
+	mds.AutoNormalizing = True
+	mds.AutoScaling = False
+	RunTsne(mds)
 
 #------------------------------------------
 
-CreateMapDataset()
+dsTable = CreateMapDataset()
 CreateMdsMap(dsTable)
 
 vv.Dataset.AddMap()
 
-CreateMapDataset()
+dsTable = CreateMapDataset()
 CreateMdsMap(dsTable)
