@@ -3,7 +3,7 @@
 # Caputure tSNE maps at different exaggeration levels ( i.e. scale ) and
 # then merging them into a single tSNE maps.
 #
-markerList = [k*1 for k in [500, 600, 700, 800, 900, 1000]]
+markerList = [k*2 for k in [500, 600, 700, 800, 900, 1000]]
 mapIs3D, showMaps, epochs = False, False, markerList[-1]
 bsList = vv.Dataset.BodyListEnabled()
 
@@ -21,6 +21,7 @@ cs = New.CsObject('''
    }
 ''')
 
+# Callback function to extract map during t-SNE training process.
 def BodyMoved():
 	if pp.CurrentLoops in markerList:
 		idx = markerList.index(pp.CurrentLoops)
@@ -31,6 +32,7 @@ def BodyMoved():
 			mp = New.MapSnapshot().Show()
 			mp.Title = "Epochs: " + str(pp.CurrentLoops)
 
+# Run t-SNE with some default behaviors.
 def RunTsne(mds):
 	mds.MaxLoops = epochs
 	mds.RefreshFreq = 50
@@ -42,10 +44,11 @@ def RunTsne(mds):
 	else:
 		mds.Close()
 
+# Create dataset from maps extracted during the t-SNE training processes.
 def CreateMapDataset():
 	mds = New.TsneMap()
-	mds.InitialExaggeration = 10.0
-	mds.FinalExaggeration = 1.0
+	mds.InitialExaggeration = 3.0
+	mds.FinalExaggeration = 1.25
 	mds.PerplexityRatio = 0.05
 	mds.AutoNormalizing = False
 	mds.AutoScaling = True
@@ -56,21 +59,51 @@ def CreateMapDataset():
 	RunTsne(mds)
 	return dsTable
 
-def CreateMdsMap(nt):
+# Create dataset from multiple maps of the same dataset.
+def ReadMapList( mapList ):
+	dimList = [vv.Dataset.ReadMap(mn).Dimension for mn in mapList]
+	rows = vv.Dataset.BodyListEnabled().Count
+	nt = New.NumberTable(rows, sum(dimList))
+	dimOffset = 0
+	for k, mn in enumerate(mapList):
+		bsList = vv.Dataset.ReadMapBodyList(mn, True)
+		for R, b in zip(nt.Matrix, bsList):
+			R[dimOffset + 0] = b.X
+			R[dimOffset + 1] = b.Y
+			if dimList[k] == 3:
+				R[dimOffset + 2] = b.Z
+		dimOffset += dimList[k]
+	for k in range(rows):
+		nt.RowSpecList[k].CopyFromBody(bsList[k])
+	return nt
+
+# Create a t-SNE map with specific dataset and metric
+def CreateMdsMap(nt, mtr="EuclideanMetric"):
 	mds = New.TsneMap()
-	mds.ChangeTrainingData(nt, "EuclideanMetric")
-	mds.InitialExaggeration = 10.0
-	mds.FinalExaggeration = 1.0
-	mds.PerplexityRatio = 0.05
+	mds.ChangeTrainingData(nt, mtr)
+	mds.InitialExaggeration = 10
+	mds.FinalExaggeration = 0.85
+	mds.PerplexityRatio = 0.15  # High PP is key for low dimensional data.
 	mds.AutoNormalizing = True
 	mds.AutoScaling = False
 	RunTsne(mds)
 
-#------------------------------------------
+#-----------------------------------------------------------------
+
+dsTable = CreateMapDataset()
+vv.Dataset.AddMap()
+CreateMdsMap(dsTable)
+
+'''
+dsTable = ReadMapList(['A2', 'A3'])
+
+vv.Dataset.AddMap()
+CreateMdsMap(dsTable, "Numerical.City Block")
+
+New.HeatMap(dsTable).Show()
 
 for k in range(2):
 	if k != 0: vv.Dataset.AddMap()
 	dsTable = CreateMapDataset()
 	CreateMdsMap(dsTable)
-
-
+'''
