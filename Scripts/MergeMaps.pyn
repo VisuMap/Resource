@@ -3,9 +3,7 @@
 # Caputure tSNE maps at different exaggeration levels ( i.e. scale ) and
 # then merging them into a single tSNE maps.
 #
-markerList = [100*k for k in range(2,11)]
-bsList = vv.Dataset.BodyListEnabled()
-showMaps = False
+markerList = [100*k for k in [2,3,4,5,6,7,8,9,10]]
 
 cs = New.CsObject('''
 	public void CaptureOneMap(INumberTable nt, List<IBody> bsList, int column0) {
@@ -24,10 +22,8 @@ def BodyMoved():
 	if pp.CurrentLoops in markerList:
 		idx = markerList.index(pp.CurrentLoops)
 		dsTable = pp.Tag
+		bsList = vv.Dataset.BodyListEnabled()
 		cs.CaptureOneMap(dsTable, bsList, 3*idx);
-		if showMaps:
-			mp = New.Map3DView().Show()
-			mp.Title = "Epochs: " + str(pp.CurrentLoops)
 
 # Run t-SNE with some default behaviors.
 def RunTsne(mds, trainEpochs, is3D):
@@ -36,6 +32,7 @@ def RunTsne(mds, trainEpochs, is3D):
 	mds.Is3D = is3D
 	mds.TracingType = 6
 	mds.Repeats = 1
+	mds.ReadOnly = True
 	mds.Show().Reset().Start()
 	if mds.CurrentLoops != mds.MaxLoops:
 		vv.Return()
@@ -43,13 +40,17 @@ def RunTsne(mds, trainEpochs, is3D):
 		mds.Close()
 
 # Create dataset from maps extracted during the t-SNE training processes.
-def CreateMapDataset(pp=0.05, initExa=4.0, finalExa=1.25):
+def CreateMapDataset(ppl=None, initExa=None, finalExa=None):
 	mds = New.TsneMap()
-	mds.InitialExaggeration = initExa
-	mds.FinalExaggeration = finalExa
-	mds.PerplexityRatio = pp
+	if ppl is not None:
+		mds.PerplexityRatio = ppl 
+	if initExa is not None:
+		mds.InitialExaggeration = initExa
+	if finalExa is not None:
+		mds.FinalExaggeration = finalExa
 	mds.AutoNormalizing = False
 	mds.AutoScaling = True	
+	bsList = vv.Dataset.BodyListEnabled()
 	mds.Tag = New.NumberTable(bsList, 3*len(markerList))
 	vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
 	vv.Map.Depth = 0.5 * (vv.Map.Height + vv.Map.Width)
@@ -75,22 +76,30 @@ def ReadMapList( mapList ):
 	return nt
 
 # Create a t-SNE map with specific dataset and metric
-def CreateMdsMap(nt, mtr="EuclideanMetric", pp=0.15, initExa=10.0, finalExa=1.0, epochs=markerList[-1]):
+def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, initExa=10.0, finalExa=1.0, epochs=markerList[-1]):
 	mds = New.TsneMap()
 	mds.ChangeTrainingData(nt, mtr)
+	mds.PerplexityRatio = ppl  # High PP is key for low dimensional data.
 	mds.InitialExaggeration = initExa
 	mds.FinalExaggeration = finalExa
-	mds.PerplexityRatio = pp  # High PP is key for low dimensional data.
 	mds.AutoNormalizing = True
 	mds.AutoScaling = False
 	RunTsne(mds, epochs, False)
 
 #-----------------------------------------------------------------
 
-dsTable = CreateMapDataset(initExa=4.0)
-CreateMdsMap(dsTable, pp=0.1, initExa=10.0)
+dsTable = CreateMapDataset()
+CreateMdsMap(dsTable, ppl=0.1)
+
+vv.Dataset.AddMap()
+dsTable = CreateMapDataset()
+CreateMdsMap(dsTable, ppl=0.1)
 
 '''
+for p in [0.1, 0.05, 0.01]:
+	vv.Dataset.AddMap()
+	CreateMdsMap(dsTable, ppl=p)
+
 dsTable = ReadMapList(['A2', 'A3'])
 
 vv.Dataset.AddMap()
@@ -99,6 +108,10 @@ CreateMdsMap(dsTable, "Numerical.Harmonic Mean")
 CreateMdsMap(dsTable, "Numerical.City Block")
 
 New.HeatMap(dsTable).Show()
+
+hm = New.HeatMap(dsTable).Show()
+hm.SelectedItems = hm.AllItems
+hm.ClickMenu('PyUtils/UMAP')
 
 for k in range(2):
 	if k != 0: vv.Dataset.AddMap()
