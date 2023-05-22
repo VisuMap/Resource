@@ -3,16 +3,17 @@
 # Caputure tSNE maps at different exaggeration levels ( i.e. scale ) and
 # then merging them into a single tSNE maps.
 #
-markerList = [100*k for k in [2,3,4,5,6,7,8,9,10]]
+markerList = None
 
 cs = New.CsObject('''
-	public void CaptureOneMap(INumberTable nt, List<IBody> bsList, int column0) {
+	public void CaptureOneMap(INumberTable nt, List<IBody> bsList, int column0, bool is3D) {
    	for(int k=0; k<bsList.Count; k++) {
 			IBody b = bsList[k];
 			double[] R = nt.Matrix[k] as double[];
 			R[column0+0] = b.X;
 			R[column0+1] = b.Y;
-			R[column0+2] = b.Z;
+			if (is3D)
+				R[column0+2] = b.Z;
 		}
    }
 ''')
@@ -23,15 +24,16 @@ def BodyMoved():
 		idx = markerList.index(pp.CurrentLoops)
 		dsTable = pp.Tag
 		bsList = vv.Dataset.BodyListEnabled()
-		cs.CaptureOneMap(dsTable, bsList, 3*idx);
+		mapDim = 3 if pp.Is3D else 2
+		cs.CaptureOneMap(dsTable, bsList, mapDim*idx, pp.Is3D);
 
 # Run t-SNE with some default behaviors.
-def RunTsne(mds, trainEpochs, is3D):
+def RunTsne(mds, trainEpochs):
 	mds.MaxLoops = trainEpochs
 	mds.RefreshFreq = 50
-	mds.Is3D = is3D
 	mds.TracingType = 6
 	mds.Repeats = 1
+	mds.StagedTraining = False
 	mds.ReadOnly = True
 	mds.Show().Reset().Start()
 	if mds.CurrentLoops != mds.MaxLoops:
@@ -40,43 +42,51 @@ def RunTsne(mds, trainEpochs, is3D):
 		mds.Close()
 
 # Create dataset from maps extracted during the t-SNE training processes.
-def CreateMapDataset(ppl=None, initExa=None, finalExa=None):
+def CreateMapDataset(is3D=True, ppl=None, initExa=None, finalExa=None):
 	mds = New.TsneMap()
-	if ppl is not None:
-		mds.PerplexityRatio = ppl 
-	if initExa is not None:
-		mds.InitialExaggeration = initExa
-	if finalExa is not None:
-		mds.FinalExaggeration = finalExa
+	if ppl != None: mds.PerplexityRatio = ppl 
+	if initExa != None: mds.InitialExaggeration = initExa
+	if finalExa != None: mds.FinalExaggeration = finalExa
 	mds.AutoNormalizing = False
-	mds.AutoScaling = True	
+	mds.AutoScaling = True
+	mds.Is3D = is3D
+	mapDim = 3 if is3D else 2
 	bsList = vv.Dataset.BodyListEnabled()
-	mds.Tag = New.NumberTable(bsList, 3*len(markerList))
+	nt = New.NumberTable(bsList, mapDim*len(markerList))
+	mds.Tag = nt
+	csList = nt.ColumnSpecList
+	for k in range(len(markerList)):
+		csList[mapDim*k].Type = k
+		csList[mapDim*k+1].Type = k
+		if is3D:
+			csList[mapDim*k+2].Type = k
+		
 	vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
 	vv.Map.Depth = 0.5 * (vv.Map.Height + vv.Map.Width)
-	RunTsne(mds, markerList[-1], True)
+	RunTsne(mds, markerList[-1])
 	return mds.Tag
 
 # Create dataset from multiple maps of the same dataset.
 def ReadMapList( mapList ):
+	mapList = mapList.split('|')
 	dimList = [vv.Dataset.ReadMap(mn).Dimension for mn in mapList]
 	rows = vv.Dataset.BodyListEnabled().Count
 	nt = New.NumberTable(rows, sum(dimList))
 	dimOffset = 0
+	csList = nt.ColumnSpecList
 	for k, mn in enumerate(mapList):
 		bsList = vv.Dataset.ReadMapBodyList(mn, True)
-		for R, b in zip(nt.Matrix, bsList):
-			R[dimOffset + 0] = b.X
-			R[dimOffset + 1] = b.Y
-			if dimList[k] == 3:
-				R[dimOffset + 2] = b.Z
-		dimOffset += dimList[k]
+		mapDim = dimList[k]
+		cs.CaptureOneMap(nt, bsList, dimOffset, mapDim == 3)
+		for n in range(mapDim):
+			csList[dimOffset + n].Type = k
+		dimOffset += mapDim				
 	for k in range(rows):
 		nt.RowSpecList[k].CopyFromBody(bsList[k])
 	return nt
 
 # Create a t-SNE map with specific dataset and metric
-def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, initExa=10.0, finalExa=1.0, epochs=markerList[-1]):
+def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, initExa=10.0, finalExa=1.0, epochs=0):
 	mds = New.TsneMap()
 	mds.ChangeTrainingData(nt, mtr)
 	mds.PerplexityRatio = ppl  # High PP is key for low dimensional data.
@@ -84,15 +94,16 @@ def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, initExa=10.0, finalExa=1.0
 	mds.FinalExaggeration = finalExa
 	mds.AutoNormalizing = True
 	mds.AutoScaling = False
-	RunTsne(mds, epochs, False)
+	mds.Is3D = False
+	if epochs == 0:
+		epochs = markerList[-1]
+	RunTsne(mds, epochs)
 
-#-----------------------------------------------------------------
-
+#------------------------------------------------------------------------------------------
+markerList = [200*k for k in [2,3,4,5,6,7,8,9,10]]
 dsTable = CreateMapDataset()
-CreateMdsMap(dsTable, ppl=0.1)
-
+#New.HeatMap(dsTable).Show()
 vv.Dataset.AddMap()
-dsTable = CreateMapDataset()
 CreateMdsMap(dsTable, ppl=0.1)
 
 '''
@@ -100,7 +111,7 @@ for p in [0.1, 0.05, 0.01]:
 	vv.Dataset.AddMap()
 	CreateMdsMap(dsTable, ppl=p)
 
-dsTable = ReadMapList(['A2', 'A3'])
+dsTable = ReadMapList('A1|A2')
 
 vv.Dataset.AddMap()
 CreateMdsMap(dsTable, "Numerical.Square Root")
@@ -113,8 +124,13 @@ hm = New.HeatMap(dsTable).Show()
 hm.SelectedItems = hm.AllItems
 hm.ClickMenu('PyUtils/UMAP')
 
+for sk in [0, 6, 12]:
+	vv.Dataset.AddMap()
+	CreateMdsMap(dsTable.SliceColumn(sk), ppl=0.05)
+
 for k in range(2):
-	if k != 0: vv.Dataset.AddMap()
+	vv.Dataset.AddMap()
 	dsTable = CreateMapDataset()
 	CreateMdsMap(dsTable)
 '''
+
