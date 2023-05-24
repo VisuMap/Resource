@@ -117,9 +117,33 @@ def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, initExa=10.0, finalExa=1.0
 	vv.Map.MapType="Rectangle"
 	RunTsne(mds)
 
+def ShowSelectedMap():
+	if pp.SelectionMode != 1:
+		return
+	columns = pp.SelectedItems.Count
+	if columns<2 or columns>3:
+		return
+	nt = pp.GetSelectedNumberTable()
+	if columns == 3:
+		New.PcaView(nt).Show()
+	else:
+		New.XyPlot(nt).Show()
+
+def ShowDataset(dsTable):
+	hm = New.HeatMap(dsTable)
+	hm.Show()
+	hm.SelectionMode=1
+	hm.AddEventHandler('ItemsSelected', '@ShowSelectedMap()')
+
+
 #------------------------------------------------------------------------------------------
-dsTable = CreateMapDataset()
+
+dsTable = CreateMapDataset(True)
+
+#ShowDataset(dsTable)
+
 CreateMdsMap(dsTable)
+
 #------------------------------------------------------------------------------------------
 
 '''
@@ -130,15 +154,14 @@ for p in [0.1, 0.05, 0.01]:
 dsTable = ReadMapList('A1|A2')
 
 vv.Dataset.AddMap()
-New.HeatMap(dsTable).Show()
+
+ShowDataset(dsTable)
 
 CreateMdsMap(dsTable, "Numerical.Square Root")
 CreateMdsMap(dsTable, "Numerical.Harmonic Mean")
 CreateMdsMap(dsTable, "Numerical.City Block")
 
 dsTable = ReadMapList('A1|A2|A7|A8|A9')
-
-
 
 hm = New.HeatMap(dsTable).Show()
 hm.SelectedItems = hm.AllItems
