@@ -82,7 +82,9 @@ def CreateMapDataset(is3D=True, ppl=None, initExa=None, finalExa=None, epochs=0)
 	vv.EventManager.OnBodyMoved('@BodyMoved()', mds)
 	vv.Map.Depth = 0.5 * (vv.Map.Height + vv.Map.Width)
 	RunTsne(mds)
-	return mds.Tag
+	dsTable = mds.Tag
+	vv.Echo(f'Dataset created:  {dsTable.Rows}x{dsTable.Columns}')
+	return dsTable
 
 # Create dataset from multiple maps of the same dataset.
 def ReadMapList( mapList ):
@@ -101,6 +103,7 @@ def ReadMapList( mapList ):
 		dimOffset += mapDim				
 	for k in range(rows):
 		nt.RowSpecList[k].CopyFromBody(bsList[k])
+	vv.Echo(f'Dataset created:  {nt.Rows}x{nt.Columns}')
 	return nt
 
 # Create a t-SNE map with specific dataset and metric
@@ -118,16 +121,17 @@ def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, initExa=10.0, finalExa=1.0
 	RunTsne(mds)
 
 def ShowSelectedMap():
-	if pp.SelectionMode != 1:
-		return
-	columns = pp.SelectedItems.Count
-	if columns<2 or columns>3:
-		return
-	nt = pp.GetSelectedNumberTable()
-	if columns == 3:
-		New.PcaView(nt).Show()
+	nn = pp.SelectedItems.Count
+	if (nn<2) or (nn>3) or (pp.SelectionMode != 1):	return	
+	nt = pp.GetNumberTable().SelectColumnsById(pp.SelectedItems)
+	bList = New.BodyList(nt)
+	if nn==3:
+		map = New.Map3DView(bList)
+		map.ResetView(0)
 	else:
-		New.XyPlot(nt).Show()
+		map = New.MapSnapshot(bList)
+		map.ResetSize()
+	map.Show()		
 
 def ShowDataset(dsTable):
 	hm = New.HeatMap(dsTable)
@@ -135,23 +139,89 @@ def ShowDataset(dsTable):
 	hm.SelectionMode=1
 	hm.AddEventHandler('ItemsSelected', '@ShowSelectedMap()')
 
+def CreateFeatureDataset(featureList):
+	nt = vv.GetNumberTable()
+	mds = New.TsneMap()
+	mds.Show()
+	is3D = False
+	mds.Is3D = is3D
+	mapDim = 3 if is3D else 2
+	mds.ReadOnly = True
+	mds.RefreshFreq = 100
+	mds.AutoNormalizing = False
+	mds.AutoScaling = False
+	bsList = vv.Dataset.BodyListEnabled()
+	L = len(featureList)
+	dimOffset = 0
+
+	dsTable = New.NumberTable(bsList, mapDim*L)
+	csList = dsTable.ColumnSpecList
+	for k in range(L):
+		for dm in range(mapDim):
+			csList[mapDim*k + dm].Type = k
+	for idx, fs in enumerate(featureList):
+		vv.Echo(f'Group: {idx+1} of {L}: {fs.Count} features')
+		ds = nt.SelectColumnsById(fs)
+		mds.ChangeTrainingData(ds)
+		mds.Reset().Start()
+		cs.CaptureOneMap(dsTable, bsList, dimOffset, is3D)
+		dimOffset += mapDim
+	mds.Close()
+	vv.Echo(f'Dataset created:  {dsTable.Rows}x{dsTable.Columns}')
+	return dsTable
+
+def Group2Features(gList):
+	gm = vv.GroupManager
+	fList = [gm.GetGroupLabels(g) for g in gList]
+	return fList
+
+def AtlasMap2Features(mapItem):
+	mp = vv.AtlasManager.OpenMap(None, mapItem)
+	fList = BodyList2Features(mp.BodyList)
+	mp.Close();
+	return fList
+
+def BodyList2Features(bodyList):
+	maxType = 0
+	for b in bodyList:
+		if b.Type > maxType:
+			maxType = b.Type
+	fList = [New.StringArray() for k in range(maxType + 1)]
+	for b in bodyList:
+		if not b.Disabled:
+			fList[b.Type].Add(b.Id)
+	fList = [f for f in fList if f.Count > 0]
+	return fList
 
 #------------------------------------------------------------------------------------------
+
 
 dsTable = CreateMapDataset(True)
 
-#ShowDataset(dsTable)
+#dsTable = ReadMapList('A0|A7|A8|A9')
+
+#featureList = Group2Features([f'A{k}' for k in range(1, 17)])
+#featureList = AtlasMap2Features('i5')
+#dsTable = CreateFeatureDataset(featureList)
 
 CreateMdsMap(dsTable)
 
-#------------------------------------------------------------------------------------------
+ShowDataset(dsTable)
 
-'''
+'''------------------------------------------------------------------------------------------
+
+
 for p in [0.1, 0.05, 0.01]:
 	vv.Dataset.AddMap()
 	CreateMdsMap(dsTable, ppl=p)
 
 dsTable = ReadMapList('A1|A2')
+
+dsTable = dsTable.SliceColumn(-9, 0)
+
+vv.GuiManager.ReuseLastWindow = True
+
+vv.Dataset.AddMap()
 
 vv.Dataset.AddMap()
 
@@ -161,7 +231,7 @@ CreateMdsMap(dsTable, "Numerical.Square Root")
 CreateMdsMap(dsTable, "Numerical.Harmonic Mean")
 CreateMdsMap(dsTable, "Numerical.City Block")
 
-dsTable = ReadMapList('A1|A2|A7|A8|A9')
+dsTable = ReadMapList('A0|A1|A3')
 
 hm = New.HeatMap(dsTable).Show()
 hm.SelectedItems = hm.AllItems
