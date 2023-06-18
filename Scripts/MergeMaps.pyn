@@ -5,19 +5,6 @@
 #
 import math, time
 
-cs = New.CsObject('''
-	public void CaptureOneMap(INumberTable nt, List<IBody> bsList, int column0, bool is3D) {
-   	for(int k=0; k<bsList.Count; k++) {
-			IBody b = bsList[k];
-			double[] R = nt.Matrix[k] as double[];
-			R[column0+0] = b.X;
-			R[column0+1] = b.Y;
-			if (is3D)
-				R[column0+2] = b.Z;
-		}
-   }
-''')
-
 # Callback function to extract map during t-SNE training process.
 rmInitSize, rmStepSize,  recordMarker = 0, 0, 0
 def BodyMoved():
@@ -30,8 +17,7 @@ def BodyMoved():
 		bsList = vv.Dataset.BodyListEnabled()
 		mapDim = 3 if pp.Is3D else 2
 		if columns + mapDim < dsTable.Columns:
-			#cs.CaptureOneMap(dsTable, bsList, columns, pp.Is3D);
-			dsTable.CopyValuesFrom(New.NumberTable(bsList, mapDim), 0, columns)
+			dsTable.CopyValuesFrom(bsList, pp.Is3D, columns)
 			fct = 1.0 if recordMarker < 3.0 else 2.0
 			recordMarker += fct*rmStepSize   # set the next recordMarker threashold.
 			dsTable.Tag = columns + mapDim
@@ -118,7 +104,7 @@ def ReadMapList( mapList ):
 	for k, mn in enumerate(mapList):
 		bsList = vv.Dataset.ReadMapBodyList(mn, True)
 		mapDim = dimList[k]
-		cs.CaptureOneMap(nt, bsList, dimOffset, mapDim == 3)
+		nt.CopyValuesFrom(bsList, mapDim == 3, dimOffset)
 		for n in range(mapDim):
 			csList[dimOffset + n].Type = k
 		dimOffset += mapDim				
@@ -186,6 +172,8 @@ def ShowDataset2(ds):
 			map.MoveBodiesTo(bodyList, steps=15, msPause=75, loops=0, loopPause=0)
 			map.Title = f'N: {k}:{col}:{col+mDim}'
 			vv.Sleep(250)
+			if col == 3*mDim:
+				map.CentralizeView()
 		vv.Sleep(1000)
 	map.Close()
 
@@ -229,7 +217,7 @@ def FeaturesToDataset(featureList, is3D=False, ppl=None, ex0=None, ex1=None, epo
 		mds.Start()
 		if mds.CurrentLoops != mds.MaxLoops:
 			vv.Return()
-		cs.CaptureOneMap(dsTable, bsList, dimOffset, is3D)
+		dsTable.CopyValuesFrom(bsList, is3D, dimOffset)
 		dimOffset += mapDim
 	mds.Close()
 	return dsTable
