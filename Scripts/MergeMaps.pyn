@@ -172,7 +172,7 @@ def ShowDataset2(ds):
 			map.MoveBodiesTo(bodyList, steps=15, msPause=75, loops=0, loopPause=0)
 			map.Title = f'N: {k}:{col}:{col+mDim}'
 			vv.Sleep(250)
-			if col == 3*mDim:
+			if mDim == 2 and col == 3*mDim:
 				map.CentralizeView()
 		vv.Sleep(1000)
 	map.Close()
@@ -198,6 +198,7 @@ def FeaturesToDataset(featureList, is3D=False, ppl=None, ex0=None, ex1=None, epo
 	mds.AutoScaling = False
 	mds.GlyphScale = 50
 	mds.CentralizingData = True
+	mds.TracingType = 6
 	bsList = vv.Dataset.BodyListEnabled()
 	L = len(featureList)
 	dimOffset = 0
@@ -208,7 +209,6 @@ def FeaturesToDataset(featureList, is3D=False, ppl=None, ex0=None, ex1=None, epo
 	for k in range(L):
 		for dm in range(mapDim):
 			csList[mapDim*k + dm].Type = k
-	# idx = 0  fs=featureList[0]
 	for idx, fs in enumerate(featureList):
 		vv.Echo(f'Feature Group: {idx+1} of {L}:  {fs.Count} features')
 		ds = nt.SelectColumnsById(fs)
@@ -222,20 +222,20 @@ def FeaturesToDataset(featureList, is3D=False, ppl=None, ex0=None, ex1=None, epo
 	mds.Close()
 	return dsTable
 
-def FeaturesToDatasetByPCA(featureList):
+def FeaturesToDatasetByPCA(featureList, nPCA=3):
 	nt = vv.GetNumberTable()
-	L = len(featureList)
-	nPCA = 3
 	bsList = vv.Dataset.BodyListEnabled()
-	dsTable = New.NumberTable(bsList, nPCA*L)
+	dsTable = New.NumberTable(bsList, nPCA*len(featureList))
 	csList = dsTable.ColumnSpecList
-	for k in range(L):
-		for dm in range(nPCA):
-			csList[nPCA*k + dm].Type = k
+	dstDim = 0
 	for idx, fs in enumerate(featureList):
 		ds = nt.SelectColumnsById(fs)
 		mPCA = ds.DoPcaReduction(nPCA)
-		dsTable.CopyValuesFrom(mPCA, 0, idx*nPCA)
+		dsTable.CopyValuesFrom(mPCA, 0, dstDim)
+		for k in range(mPCA.Columns):
+			csList[dstDim+k].Type = idx
+		dstDim += mPCA.Columns
+	dsTable = dsTable.SliceColumn(0, dstDim)
 	return dsTable
 
 def Group2Features(gList):
@@ -247,8 +247,11 @@ def Group2Features(gList):
 			fList.append(f)
 	return fList
 
-def AtlasMap2Features(mapItem):  # mapItem = 'i1'
+def AtlasMap2Features(mapItem):  
 	mp = vv.AtlasManager.OpenMap(None, mapItem)
+	if mp is None:
+		vv.Message(f'Cannot load map item: {mapItem}')
+		vv.Return()
 	fList = BodyList2Features(mp.BodyList)
 	fList = MergeSmallGroups(fList, 5)
 	vv.Echo(f'Feature groups loaded: {[f.Count for f in fList]}')
@@ -305,48 +308,49 @@ def LoadFeatureList(groupName):
 #-------------------------------------------------------------------------
 
 
-def CreateDataset(_dsType, usingPCA=False):
+def CreateDataset(_dsType):
 	global dsType
 	global dsTable
 	global featureList
-
 	dsType = _dsType
 	
 	if dsType == 0:
-		dsTable = CreateMapDataset(is3D=False, initSize=0.5, stepSize=0.5, ex0=4.0, ex1=1.0, ppl=0.05)
-	elif dsType == 4:
-		featureList = FeaturesByScale(maxGroups=16, minFeatures=20)
+		dsTable = CreateMapDataset(is3D=True, initSize=0.5, stepSize=0.5, ex0=4.0, ex1=1.0, ppl=0.05)
 	elif dsType == 1:
-		dsTable = ReadMapList('A0|A7|A8|A9')
+		featureList = AtlasMap2Features('i17')
 	elif dsType == 2:
-		featureList = Group2Features([f'G{k}' for k in range(20)])
+		featureList = FeaturesByScale(maxGroups=16, minFeatures=20)
 	elif dsType == 3:
-		featureList = AtlasMap2Features('i1')
+		dsTable = ReadMapList('A0|A7|A8|A9')
+	elif dsType == 4:
+		featureList = Group2Features([f'G{k}' for k in range(20)])
 	elif dsType == 5:
 		featureList = LoadFeatureList('Chr17_List')
+	elif dsType == 6:
+		SaveFeatureList(featureList, 'Chr17_List')
 	
-	if dsType in [2,3,4,5]:
-		vv.Echo(f'Feature list size: {[f.Count for f in featureList]}')
-		if usingPCA:
-			dsTable = FeaturesToDatasetByPCA(featureList)
-		else:
-			dsTable = FeaturesToDataset(featureList, ex0=4.0, ex1=1.0, ppl=0.05)
+	if dsType in [1,2,4,5]:
+		szList = [f.Count for f in featureList]
+		vv.Echo(f'Features: {szList},   Total: {sum(szList)}')
+		#dsTable = FeaturesToDatasetByPCA(featureList, nPCA=5)
+		dsTable = FeaturesToDataset(featureList, is3D=True, ex0=6.0, ex1=1.0, ppl=0.1)
+ 
+CreateDataset(2)
+CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.1)
 
-#-------------------------------------------------------------------------
+vv.Dataset.AddMap()
 
-CreateDataset(0, usingPCA=True)
-for k in [0, 1]:
-	if k != 0:
-		vv.Dataset.AddMap()
-	CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.05)
+CreateDataset(2)
+CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.1)
 
 '''-----------------------------------------------------------------------
+
+for k in [1,2,3]:
+	vv.Echo(2*k)
 
 ShowDataset(dsTable)
 
 ShowDataset2(dsTable)
-
-SaveFeatureList(featureList, 'Chr17_List')
 
 for p in [0.1, 0.05, 0.01]:
 	vv.Dataset.AddMap()
@@ -365,5 +369,8 @@ CreateMdsMap(dsTable, "Numerical.City Block")
 hm = New.HeatMap(dsTable).Show()
 hm.SelectedItems = hm.AllItems
 hm.ClickMenu('PyUtils/UMAP')
+
+vv.ClickMenu('PyUtils/UMAP')
+
 '''
 
