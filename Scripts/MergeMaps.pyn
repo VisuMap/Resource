@@ -10,7 +10,7 @@ rmInitSize, rmStepSize,  recordMarker = 0, 0, 0
 def BodyMoved():
 	global recordMarker
 	if pp.CurrentLoops == 0:
-		return
+		return	
 	if (pp.GlyphSpan > recordMarker) or (pp.CurrentLoops == pp.MaxLoops):
 		dsTable = pp.Tag
 		columns = dsTable.Tag
@@ -155,6 +155,10 @@ def ShowDataset(dsTable):
 	hm.Title = 'Data Dimension: ' + str(dsTable.Rows) + 'x' + str(dsTable.Columns)
 	hm.AddEventHandler('ItemsSelected', '@ShowSelectedMap()')
 
+def ShowFeatures(featureList):
+	szList = [f.Count for f in featureList]
+	vv.Echo(f'Features: {szList},   Total: {sum(szList)}')
+
 def ShowDataset2(ds):
 	mDim = 3 if ds.ColumnSpecList[2].Group == 0 else 2
 	bs = New.BodyList(ds)
@@ -199,6 +203,7 @@ def FeaturesToDataset(featureList, is3D=False, ppl=None, ex0=None, ex1=None, epo
 	mds.GlyphScale = 50
 	mds.CentralizingData = True
 	mds.TracingType = 6
+	mds.Repeats = 1
 	bsList = vv.Dataset.BodyListEnabled()
 	L = len(featureList)
 	dimOffset = 0
@@ -209,8 +214,9 @@ def FeaturesToDataset(featureList, is3D=False, ppl=None, ex0=None, ex1=None, epo
 	for k in range(L):
 		for dm in range(mapDim):
 			csList[mapDim*k + dm].Type = k
-	for idx, fs in enumerate(featureList):
-		vv.Echo(f'Feature Group: {idx+1} of {L}:  {fs.Count} features')
+	szList = [f.Count for f in featureList]
+	for idx, fs in enumerate(featureList):  
+		vv.Title = f'Reducing Feature Group: {fs.Count} out of {szList}'
 		ds = nt.SelectColumnsById(fs)
 		mds.ChangeTrainingData(ds)
 		mds.Reset()
@@ -238,7 +244,7 @@ def FeaturesToDatasetByPCA(featureList, nPCA=3):
 	dsTable = dsTable.SliceColumn(0, dstDim)
 	return dsTable
 
-def Group2Features(gList):
+def GroupesToFeatures(gList):
 	gm = vv.GroupManager
 	fList = []
 	for g in gList:
@@ -305,50 +311,60 @@ def LoadFeatureList(groupName):
 		vv.Return()
 	return [New.StringArray(g.split('$')) for g in glist]
 
-#-------------------------------------------------------------------------
+isFirstMap = True
+def SwitchToNewMap():
+	global isFirstMap
+	if isFirstMap:
+		isFirstMap = False
+	else:
+		vv.Dataset.AddMap()
 
+#-------------------------------------------------------------------------
 
 def CreateDataset(_dsType):
 	global dsType
 	global dsTable
 	global featureList
 	dsType = _dsType
-	
+
+	vv.Echo(f'Creating DS: {dsType}')
+
+	SwitchToNewMap()
+
 	if dsType == 0:
-		dsTable = CreateMapDataset(is3D=True, initSize=0.5, stepSize=0.5, ex0=4.0, ex1=1.0, ppl=0.05)
+		dsTable = CreateMapDataset(is3D=True, initSize=0.2, stepSize=0.25, ex0=3.0, ex1=1.0, ppl=0.1)
 	elif dsType == 1:
-		featureList = AtlasMap2Features('i17')
-	elif dsType == 2:
 		featureList = FeaturesByScale(maxGroups=16, minFeatures=20)
+	elif dsType == 2:
+		featureList = AtlasMap2Features('i25')
 	elif dsType == 3:
-		dsTable = ReadMapList('A0|A7|A8|A9')
+		dsTable = ReadMapList('A1|A2|A2|A2|A2')
 	elif dsType == 4:
 		featureList = Group2Features([f'G{k}' for k in range(20)])
 	elif dsType == 5:
-		featureList = LoadFeatureList('Chr17_List')
+		featureList = GroupesToFeatures('Chr17_List')
 	elif dsType == 6:
 		SaveFeatureList(featureList, 'Chr17_List')
 	
 	if dsType in [1,2,4,5]:
-		szList = [f.Count for f in featureList]
-		vv.Echo(f'Features: {szList},   Total: {sum(szList)}')
 		#dsTable = FeaturesToDatasetByPCA(featureList, nPCA=5)
-		dsTable = FeaturesToDataset(featureList, is3D=True, ex0=6.0, ex1=1.0, ppl=0.1)
- 
-CreateDataset(2)
-CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.1)
+		dsTable = FeaturesToDataset(featureList, is3D=True, ex0=8.0, ex1=1.0, ppl=0.1)
 
-vv.Dataset.AddMap()
-
-CreateDataset(2)
-CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.1)
+for k in [1,1,1]:
+	CreateDataset(k)
+	CreateMdsMap(dsTable, ex0=8.0, ex1=1.0, ppl=0.05)
 
 '''-----------------------------------------------------------------------
 
-for k in [1,2,3]:
-	vv.Echo(2*k)
+ShowFeatures(featureList)
 
 ShowDataset(dsTable)
+
+for k in [0,0,0,1,1,1]:
+	CreateDataset(k)
+	CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.1)
+
+cm = New.ClusterManager().Show()
 
 ShowDataset2(dsTable)
 
@@ -360,7 +376,7 @@ for sk in [0, 6, 12]:
 	vv.Dataset.AddMap()
 	CreateMdsMap(dsTable.SliceColumn(sk), ppl=0.05)
 
-dsTable = dsTable.SliceColumn(4, 0)
+dsTable = dsTable.SliceColumn(3, 0)
 
 vv.GuiManager.ReuseLastWindow = False
 
@@ -370,7 +386,4 @@ hm = New.HeatMap(dsTable).Show()
 hm.SelectedItems = hm.AllItems
 hm.ClickMenu('PyUtils/UMAP')
 
-vv.ClickMenu('PyUtils/UMAP')
-
 '''
-
