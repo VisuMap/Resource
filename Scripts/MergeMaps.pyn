@@ -9,22 +9,23 @@ import math, time
 rmInitSize, rmStepSize,  recordMarker = 0, 0, 0
 def BodyMoved():
 	global recordMarker
-	if pp.CurrentLoops == 0:
+
+	dsTable = pp.Tag
+	columns = dsTable.Tag
+	mapDim = 3 if pp.Is3D else 2
+
+	if (pp.CurrentLoops == 0) or (columns + mapDim > dsTable.Columns):
 		return	
-	if (pp.GlyphSpan > recordMarker) or (pp.CurrentLoops == pp.MaxLoops):
-		dsTable = pp.Tag
-		columns = dsTable.Tag
-		bsList = vv.Dataset.BodyListEnabled()
-		mapDim = 3 if pp.Is3D else 2
-		if columns + mapDim < dsTable.Columns:
-			dsTable.CopyValuesFrom(bsList, pp.Is3D, columns)
-			fct = 1.0 if recordMarker < 3.0 else 2.0
-			recordMarker += fct*rmStepSize   # set the next recordMarker threashold.
-			dsTable.Tag = columns + mapDim
-			if pp.CurrentLoops == pp.MaxLoops:  # clean-up after the last epoch.
-				dsTable = dsTable.SliceColumn(0, dsTable.Tag)
-				dsTable.Tag = dsTable.Columns
-				pp.Tag = dsTable
+	if (pp.GlyphSpan < recordMarker) and (pp.CurrentLoops != pp.MaxLoops):
+		return
+	bsList = vv.Dataset.BodyListEnabled()
+	if IsCollapsed(bsList, mapDim, pp.GlyphScale): # the map is still collapsed
+		return
+
+	dsTable.CopyValuesFrom(bsList, pp.Is3D, columns)
+	fct = 1.0 if recordMarker < 3.0 else 2.0
+	recordMarker += fct*rmStepSize   # set the next recordMarker threashold.
+	dsTable.Tag = columns + mapDim
 
 # Run t-SNE with some default behaviors.
 def RunTsne(mds):
@@ -75,7 +76,7 @@ def CreateMapDataset(is3D=True, initSize=0.2, stepSize=0.5, ppl=None, ex0=None, 
 	vv.Map.MapType = "Cube" if is3D else "Rectangle"
 	bsList = vv.Dataset.BodyListEnabled()
 	recordMarker = rmInitSize    	# Initial recordMarker.
-	maxRecords = 40
+	maxRecords = 50
 	nt = New.NumberTable(bsList, mapDim*maxRecords)
 	mds.Tag = nt
 	nt.Tag = 0
@@ -90,6 +91,7 @@ def CreateMapDataset(is3D=True, initSize=0.2, stepSize=0.5, ppl=None, ex0=None, 
 	vv.Map.Depth = 0.5 * (vv.Map.Height + vv.Map.Width)
 	RunTsne(mds)
 	dsTable = mds.Tag
+	dsTable = dsTable.SliceColumn(0, dsTable.Tag)
 	vv.Echo(f'Dataset created:  {dsTable.Rows}x{dsTable.Columns}')
 	return dsTable
 
@@ -118,7 +120,7 @@ def Settings(nt, mds):
 	return f'Settings: {dsType}:{nt.Rows}x{nt.Columns}; {mds.MaxLoops}; {mds.PerplexityRatio}; {mds.InitialExaggeration}/{mds.FinalExaggeration}, {time.asctime()}'
 
 # Create a t-SNE map with specific dataset and metric
-def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, ex0=10.0, ex1=1.0, epochs=0):
+def CreateMdsMap(nt, mtr="EuclideanMetric", is3D=False, ppl=0.15, ex0=10.0, ex1=1.0, epochs=0):
 	mds = New.TsneMap()
 	if epochs != 0: mds.MaxLoops = epochs
 	mds.ChangeTrainingData(nt, mtr)
@@ -128,7 +130,7 @@ def CreateMdsMap(nt, mtr="EuclideanMetric", ppl=0.15, ex0=10.0, ex1=1.0, epochs=
 	mds.FinalExaggeration = ex1
 	mds.AutoNormalizing = True
 	mds.AutoScaling = False
-	mds.Is3D = False
+	mds.Is3D = is3D
 	mds.RefreshFreq = 100
 	vv.Map.MapType="Rectangle"
 	vv.Map.Description = Settings(nt, mds)
@@ -319,6 +321,21 @@ def SwitchToNewMap():
 	else:
 		vv.Dataset.AddMap()
 
+# Check whether a map has collapsed dimensions
+isUnfold = False
+def IsCollapsed(bsList, mapDim, spanFactor):
+	global isUnfold
+	if isUnfold:
+		return False
+	nt = New.NumberTable(bsList, mapDim)
+	ev = New.NumberArray()
+	nt.GetPcaEigenvectors(ev, mapDim)
+	ev = [math.sqrt(v/spanFactor) for v in ev]
+	minEv = ev[1] if mapDim == 3 else ev[0]
+	vv.Echo(f'{ev[0]}, {ev[1]}, {ev[2]}')
+	isUnfold = (minEv > 0.2)
+	return not isUnfold
+
 #-------------------------------------------------------------------------
 
 def CreateDataset(_dsType):
@@ -332,7 +349,7 @@ def CreateDataset(_dsType):
 	SwitchToNewMap()
 
 	if dsType == 0:
-		dsTable = CreateMapDataset(is3D=True, initSize=0.2, stepSize=0.25, ex0=3.0, ex1=1.0, ppl=0.1)
+		dsTable = CreateMapDataset(stepSize=0.5, is3D=True, ex0=8.0, ex1=1.0, ppl=0.1)
 	elif dsType == 1:
 		featureList = FeaturesByScale(maxGroups=16, minFeatures=20)
 	elif dsType == 2:
@@ -350,9 +367,9 @@ def CreateDataset(_dsType):
 		#dsTable = FeaturesToDatasetByPCA(featureList, nPCA=5)
 		dsTable = FeaturesToDataset(featureList, is3D=True, ex0=8.0, ex1=1.0, ppl=0.1)
 
-for k in [1,1,1]:
+for k in [0]:
 	CreateDataset(k)
-	CreateMdsMap(dsTable, ex0=8.0, ex1=1.0, ppl=0.05)
+	CreateMdsMap(dsTable, is3D=False, ex0=8.0, ex1=1.0, ppl=0.05)
 
 '''-----------------------------------------------------------------------
 
@@ -362,7 +379,7 @@ ShowDataset(dsTable)
 
 for k in [0,0,0,1,1,1]:
 	CreateDataset(k)
-	CreateMdsMap(dsTable, ex0=6.0, ex1=1.0, ppl=0.1)
+	CreateMdsMap(dsTable, is3D=False, ex0=6.0, ex1=1.0, ppl=0.1)
 
 cm = New.ClusterManager().Show()
 
